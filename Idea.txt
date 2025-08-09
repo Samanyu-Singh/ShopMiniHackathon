@@ -1,0 +1,9 @@
+The idea for this shop mini is a platform. Where I can view the products my friends are buying.
+I can also see the products I like but on the top of the page I can just scroll through and select from my friends what
+their feed is showing them. Then when I press on lets say Roman. The feed gets refreshed
+With what roman is buying and the products he likes.
+
+I can invite friends to let me see their feed and them seeing mine.
+
+The idea is since everyone has a unique curated feed. Lets say my friends have good clothing style
+I can hop onto their feed and see what products they get reccomended.

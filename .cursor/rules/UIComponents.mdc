@@ -1,0 +1,480 @@
+---
+
+name: Cursor Rules – Shop Minis (2) UI Components
+summary: Complete, ready-to-paste usage for every UI component provided. Import from `@shopify/shop-minis-react` and do not change prop names.
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+# Components Index
+
+Accordion · AlertDialog · Alert · Avatar · Badge · Button · Card · Checkbox · FavoriteButton · IconButton · Input · Label · List · MerchantCard · ProductCard · ProductLink · ProductVariantPrice · Progress · QuantitySelector · RadioGroup · Select · Skeleton · Search · Toaster · Touchable · VideoPlayer
+
+---
+
+## Accordion
+
+A component with multiple configuration options for collapsing and expanding content.
+
+```tsx
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  return (
+    <Accordion type="single" collapsible>
+      <AccordionItem value="item-1">
+        <AccordionTrigger>Can I open multiple items?</AccordionTrigger>
+        <AccordionContent>
+          Yes, you can open multiple items at the same time with the multiple type.
+        </AccordionContent>
+      </AccordionItem>
+      <AccordionItem value="item-2">
+        <AccordionTrigger>Is it customizable?</AccordionTrigger>
+        <AccordionContent>
+          Yes, you can customize the styling and behavior to match your needs.
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  )
+}
+```
+
+## AlertDialog
+
+A composable component for important confirmations and alerts with customizable actions.
+
+```tsx
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  Button,
+} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const handleConfirm = () => {
+    console.log('Confirmed')
+  }
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline">Show Dialog</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete your account and remove your data from our servers.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleConfirm}>Continue</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+```
+
+## Alert
+
+A component with a title and description, available in different visual variants.
+
+```tsx
+import {Alert, AlertTitle, AlertDescription} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  return (
+    <Alert variant="default">
+      <AlertTitle>Heads up!</AlertTitle>
+      <AlertDescription>
+        You can add components to your app using our SDK.
+      </AlertDescription>
+    </Alert>
+  )
+}
+```
+
+## Avatar
+
+Display user avatars with image support and fallback initials for when the image fails to load.
+
+```tsx
+import {Avatar, AvatarFallback, AvatarImage} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  return (
+    <Avatar>
+      <AvatarImage src="https://example.com/avatar.png" alt="my-avatar" />
+      <AvatarFallback>CN</AvatarFallback>
+    </Avatar>
+  )
+}
+```
+
+## Badge
+
+A component for displaying status, categories, or labels with multiple visual variants.
+
+```tsx
+import {Badge} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  return <Badge>Badge</Badge>
+}
+```
+
+## Button
+
+A versatile button component with multiple variants and sizes for user interactions.
+
+```tsx
+import {Button} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const handleClick = () => {
+    console.log('Button pressed')
+  }
+  return <Button onClick={handleClick}>Continue</Button>
+}
+```
+
+## Card
+
+A composable component with header, content, and footer sections for displaying grouped information.
+
+```tsx
+import {Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Card Title</CardTitle>
+        <CardDescription>Card description goes here</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p>This is the main content of the card.</p>
+      </CardContent>
+      <CardFooter>
+        <p>Card footer content</p>
+      </CardFooter>
+    </Card>
+  )
+}
+```
+
+## Checkbox
+
+A component for boolean selections with checked and disabled states.
+
+```tsx
+import {Checkbox} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  return <Checkbox checked />
+}
+```
+
+## FavoriteButton
+
+A button component for toggling a favorite state, typically used for products.
+
+```tsx
+import {useState} from 'react'
+import {FavoriteButton} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const [isFavorited, setIsFavorited] = useState(true)
+  return <FavoriteButton filled={isFavorited} onClick={() => setIsFavorited(!isFavorited)} />
+}
+```
+
+## IconButton
+
+A button component that displays an icon in various sizes.
+
+```tsx
+import {IconButton} from '@shopify/shop-minis-react'
+import {Heart} from 'lucide-react'
+
+export default function MyComponent() {
+  return <IconButton Icon={Heart} onClick={() => console.log('Icon button clicked')} />
+}
+```
+
+## Input
+
+A simple component for inputting text.
+
+```tsx
+import {Input} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  return <Input placeholder="Enter text..." value="This is an input" />
+}
+```
+
+## Label
+
+A simple component to render accessible text.
+
+```tsx
+import {Label} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  return <Label>This is a text label</Label>
+}
+```
+
+## List
+
+A virtualized list component for efficiently rendering large datasets with customizable item rendering.
+
+```tsx
+import {List} from '@shopify/shop-minis-react'
+
+const sampleItems = [
+  {id: '1', title: 'Item 1'},
+  {id: '2', title: 'Item 2'},
+  {id: '3', title: 'Item 3'},
+  {id: '4', title: 'Item 4'},
+  {id: '5', title: 'Item 5'},
+]
+
+export default function MyComponent() {
+  const getItemSize = () => 60
+  const renderItem = (item: {id: string; title: string}) => (
+    <div className="p-4 border-b">
+      <span>{item.title}</span>
+    </div>
+  )
+
+  return (
+    <List
+      items={sampleItems}
+      height={300}
+      itemSizeForRow={getItemSize}
+      showScrollbar
+      renderItem={renderItem}
+    />
+  )
+}
+```
+
+## MerchantCard
+
+A component for displaying merchant information with their branding.
+
+```tsx
+import {MerchantCard} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  // supply a real `shop` object from your data layer
+  return <MerchantCard shop={shop} />
+}
+```
+
+## ProductCard
+
+A component for displaying product information including a featured image, price, and reviews.
+
+```tsx
+import {ProductCard} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const handleFavoriteToggled = (productId: string, isFavorited: boolean) => {
+    console.log('Favorite toggled:', productId, isFavorited)
+  }
+  return <ProductCard product={product} onFavoriteToggled={handleFavoriteToggled} />
+}
+```
+
+## ProductLink
+
+A component for displaying product information.
+
+```tsx
+import {ProductLink} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  return <ProductLink product={product} />
+}
+```
+
+## ProductVariantPrice
+
+A component for displaying product pricing with support for discounts and custom styling.
+
+```tsx
+import {ProductVariantPrice} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  return <ProductVariantPrice amount="29.99" currencyCode="USD" />
+}
+```
+
+## Progress
+
+A component for showing completion status or loading progress.
+
+```tsx
+import {Progress} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  return <Progress value={50} />
+}
+```
+
+## QuantitySelector
+
+A component with increment and decrement buttons for adjusting quantities.
+
+```tsx
+import {QuantitySelector} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  return (
+    <QuantitySelector
+      quantity={1}
+      onQuantityChange={(q) => console.log('Quantity changed to:', q)}
+      maxQuantity={10}
+    />
+  )
+}
+```
+
+## RadioGroup
+
+A radio group component for single-selection options.
+
+```tsx
+import {RadioGroup, RadioGroupItem, Label} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  return (
+    <RadioGroup defaultValue="option-1">
+      <div className="flex items-center space-x-2">
+        <RadioGroupItem value="option-1" id="option-1" />
+        <Label>Option 1</Label>
+      </div>
+      <div className="flex items-center space-x-2">
+        <RadioGroupItem value="option-2" id="option-2" />
+        <Label>Option 2</Label>
+      </div>
+    </RadioGroup>
+  )
+}
+```
+
+## Select
+
+A dropdown component with support for grouped options and disabled states.
+
+```tsx
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  return (
+    <Select defaultValue="option-1">
+      <SelectTrigger>
+        <SelectValue placeholder="Select an option" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="option-1">Option 1</SelectItem>
+        <SelectItem value="option-2">Option 2</SelectItem>
+        <SelectItem value="option-3">Option 3</SelectItem>
+      </SelectContent>
+    </Select>
+  )
+}
+```
+
+## Skeleton
+
+A placeholder component for loading states, with customizable dimensions.
+
+```tsx
+import {Skeleton} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  return <Skeleton className="h-4 w-20" />
+}
+```
+
+## Search
+
+A component for searching products with debounced input and loading state and a results list.
+
+```tsx
+import {Search} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  return <Search />
+}
+```
+
+## Toaster
+
+A notification component that shows up from the bottom, in various states.
+
+```tsx
+import {Toaster, Button, toast} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  return (
+    <>
+      <Button onClick={() => toast.success('Success toast!')}>Show success Toast</Button>
+      <Toaster />
+    </>
+  )
+}
+```
+
+## Touchable
+
+A wrapper component that makes any child element clickable with a custom handler.
+
+```tsx
+import {Touchable} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  return (
+    <Touchable onClick={() => console.log('Touchable clicked')}>
+      <div>Continue</div>
+    </Touchable>
+  )
+}
+```
+
+## VideoPlayer
+
+A video player component built on Video.js with a play/pause UI overlay, and programmatic playback control.
+
+```tsx
+import {VideoPlayer} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  return (
+    <VideoPlayer
+      src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+      poster="https://picsum.photos/400/225"
+      height={225}
+      onPlay={() => console.log('Video started playing')}
+      onPause={() => console.log('Video paused')}
+      onEnded={() => console.log('Video ended')}
+    />
+  )
+}
+```
