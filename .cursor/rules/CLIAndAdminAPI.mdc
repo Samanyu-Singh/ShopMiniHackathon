@@ -1,0 +1,262 @@
+---
+
+name: Cursor Rules – Shop Minis (1) CLI & Admin API
+summary: Authoritative reference for Shop Minis CLI and Minis Admin API. Paste this entire file into Cursor Rules. Do not invent flags or endpoints.
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Scope
+
+This rule file covers **everything** you provided for:
+
+* **Shop Minis CLI** commands, arguments, and options.
+* **Minis Admin API**: authentication, rate limiting, and mutations (`miniToggle`, `userTokenVerify`).
+* **Quick platform notes** (trusted domains, async/secure storage) captured from screenshots.
+
+> For UI components and hooks, see the companion files:
+> (2) UI Components, (3) Hooks A–M, (4) Hooks N–Z.
+
+---
+
+# Shop Minis CLI — Commands & Options
+
+Use `npx shop-minis <command> --help` for live usage details. **Only** use the flags listed below.
+
+## `npx shop-minis cancel-submission [options]`
+
+Cancel a pending or testing submission.
+
+* **Options**
+
+  * `--verbose` *(boolean)* — Print debugging messages.
+
+## `npx shop-minis check-submission [options]`
+
+Check the status of your submissions.
+
+* **Options**
+
+  * `--verbose` *(boolean)* — Print debugging messages.
+
+## `npx shop-minis create [options] [mini name]`
+
+Create a new Shop Mini project.
+
+* **Arguments**
+
+  * `mini name` *(string)* — The name of your Shop Mini.
+* **Options**
+
+  * `--output-dir` *(string)* — Specify an output directory.
+  * `--verbose` *(boolean)* — Print debugging messages.
+
+## `npx shop-minis dev [options]`
+
+Start a local development server.
+
+* **Options**
+
+  * `--build-type` *('release' | 'nightly' | 'snapshot')* — Build type.
+  * `--host` *(string)* — Host address for the packager.
+  * `--snapshot-version` *(string)* — Snapshot version (e.g., `2.100.0+544`).
+  * `--tunnel` *(boolean)* — Use ngrok to create a tunnel to the local server.
+  * `--verbose` *(boolean)* — Verbose output.
+
+## `npx shop-minis doctor [options]`
+
+Diagnose and fix common Node.js, iOS and Android issues.
+
+* **Options**
+
+  * `--fix` *(boolean)* — Attempt to fix all diagnosed issues automatically.
+  * `--verbose` *(boolean)* — Print debugging messages.
+
+## `npx shop-minis features [options]`
+
+Manage enabled features.
+
+* **Options**
+
+  * `--disable` *(string)* — Disable a specific feature.
+  * `--enable` *(string)* — Enable a specific feature.
+
+## `npx shop-minis info [options]`
+
+Get relevant version info about OS, toolchain and libraries.
+
+* **Options**
+
+  * `--verbose` *(boolean)* — Print debugging messages.
+
+## `npx shop-minis install [options] [dependency]`
+
+Install a dependency, check existing dependencies, or fix dependency issues.
+
+* **Arguments**
+
+  * `dependency` *(string)* — The dependency to install (e.g., `react@^18.0.0`).
+* **Options**
+
+  * `--check` *(boolean)* — Check that installed dependencies are valid.
+  * `--fix` *(boolean)* — Fix dependency issues by adding, updating, or removing dependencies.
+
+## `npx shop-minis reports dates [options] <report-type>`
+
+List available dates for a specific report type (all dates are in UTC).
+
+* **Arguments**
+
+  * `report-type` *(string, required)* — One of: `CONTENT_IMPRESSIONS`, `PRODUCT_IMPRESSIONS`, `SALES`, `USAGE_STATS`.
+* **Options**
+
+  * `--raw` *(boolean)* — Display only the dates without headers or formatting.
+
+## `npx shop-minis reports get [options] <report-type> <date>`
+
+Download a report for a specific date.
+
+* **Arguments**
+
+  * `report-type` *(string, required)* — Report type (see `reports list`).
+  * `date` *(string, required)* — UTC date in `YYYY-MM-DD`.
+* **Options**
+
+  * `--output` *(string)* — Output file path (defaults to `report_.csv`).
+
+## `npx shop-minis reports list`
+
+List all available report types.
+
+## `npx shop-minis setup`
+
+Set up a new Mini.
+
+## `npx shop-minis submit [options]`
+
+Submit your Shop Mini for review.
+
+* **Options**
+
+  * `--description` *(boolean)* — A description of the changes in this submission.
+  * `--verbose` *(boolean)* — Print debugging messages.
+
+## `npx shop-minis upgrade [options]`
+
+Upgrade your Shop Mini configuration to the latest version.
+
+* **Options**
+
+  * `--no-codemod` *(boolean)* — Skip running codemods after upgrading packages.
+  * `--verbose` *(boolean)* — Print debugging messages.
+  * `--yes` *(boolean)* — Automatically answer prompts with default options.
+
+---
+
+# Minis Admin API — GraphQL
+
+Manage your Mini from a backend service. **Do not** call this API from client code.
+
+## Endpoint
+
+```
+POST https://server.shop.app/minis/admin-api/alpha/graphql.json
+```
+
+## Authentication
+
+* Requests are authenticated with an **API key** generated during `npx shop-minis setup`.
+* The key is stored in your project `.env` file.
+* Send as a Bearer token.
+
+### cURL example
+
+```bash
+curl -X POST \
+  https://server.shop.app/minis/admin-api/alpha/graphql.json \
+  -H 'Content-Type: application/graphql' \
+  -H 'Authorization: Bearer <shop-minis-admin-api-key>' \
+  -d '{ your_query }'
+```
+
+## Rate limiting
+
+Throttled requests return **HTTP 429** with a top-level error code `TOO_MANY_REQUESTS`.
+
+```json
+{
+  "data": null,
+  "errors": [
+    {
+      "message": "Slow down there partner.",
+      "extensions": { "code": "TOO_MANY_REQUESTS" }
+    }
+  ]
+}
+```
+
+## Mutations
+
+### `miniToggle`
+
+Enables or disables the Mini by partner.
+
+```graphql
+mutation ToggleMini($enable: Boolean!) {
+  miniToggle(enable: $enable) {
+    enabled
+  }
+}
+```
+
+* **Input**
+
+  * `enable` *(boolean, required)* — The flag to enable or disable the Mini.
+* **Return** — `MiniTogglePayload`
+
+  * `enabled` *(boolean | null)* — Whether the Mini is enabled after the call.
+
+### `userTokenVerify`
+
+Verifies a temporary user token.
+
+```graphql
+mutation VerifyUserToken($token: String!) {
+  userTokenVerify(token: $token) {
+    tokenExpiresAt
+    userIdentifier
+
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}
+```
+
+* **Input**
+
+  * `token` *(string, required)* — The temporary user token to verify.
+* **Return** — `UserTokenVerifyPayload`
+
+  * `userErrors` *(UserTokenVerifyUserError\[], required)* — Errors encountered while executing the mutation.
+  * `tokenExpiresAt` *(ISO8601DateTime | null)* — Expiration date/time of the token.
+  * `userIdentifier` *(string | null)* — Permanent identifier for the user.
+  * `userState` *('VERIFIED' | 'GUEST' | null)* — State of the user.
+
+---
+
+# Quick Platform Notes (from screenshots)
+
+These are operational guardrails to prevent avoidable runtime issues:
+
+## Trusted domains
+
+Add all external hosts (APIs, CDNs, media origins) to the **trusted domains** list in your Mini configuration. Requests to untrusted domains can be blocked.
+
+## Async storage
+
+Use `useAsyncStorage()` for non-sensitive persistence across sessions: `getItem`, `setItem`, `removeItem`, `getAllKeys`, `clear`.
+
+## Secure storage
+
+Use `useSecureStorage()` for sensitive values. One secret per Mini. APIs: `getSecret`, `setSecret`, `removeSecret`.
