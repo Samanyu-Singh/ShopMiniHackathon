@@ -1,0 +1,4 @@
+---
+description: These rules are used for designing the front end of my shop mini app. Always well comment any front end code with an explanation of its role. Use react and use Tailwind CSS for the front end design. Never make extremely drastic changes. Keep most changes functional. 
+alwaysApply: True
+---

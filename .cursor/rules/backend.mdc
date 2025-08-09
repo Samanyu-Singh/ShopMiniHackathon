@@ -1,0 +1,5 @@
+---
+description: Keep any code well written. The goal should be clear and any steps taken should be purely functional without going out of the bounds of the change request. Try to remain within the same tech stack that is within the codebase. Any major changes should be brought up to me. 
+globs:
+alwaysApply: True
+---
