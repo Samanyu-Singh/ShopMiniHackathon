@@ -1,0 +1,319 @@
+---
+
+name: Cursor Rules – Shop Minis (4) Hooks N–Z
+summary: COMPLETE reference for hooks N through Z. Import from `@shopify/shop-minis-react`. Do not alter API names.
+-------------------------------------------------------------------------------------------------------------------
+
+# Hooks Index (N–Z)
+
+usePopularProducts · useProduct · useProductList · useProductListActions · useProductLists · useProductMedia · useProductSearch · useProductVariants · useProducts · useRecentProducts · useRecentShops · useRecommendedProducts · useRecommendedShops · useSavedProducts · useSavedProductsActions · useSecureStorage · useShare · useShop · useShopCartActions · useShopNavigation
+
+---
+
+## usePopularProducts
+
+Fetch popular products from the catalog.
+
+```tsx
+import {usePopularProducts, Button} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {products, loading, error, hasNextPage, loadMore} = usePopularProducts({ first: 10 })
+  console.log({products, loading, error})
+  return hasNextPage ? <Button onClick={loadMore} disabled={loading}>Load More Products</Button> : null
+}
+```
+
+## useProduct
+
+Fetch a single product by its ID.
+
+```tsx
+import {useProduct} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {product, loading, error} = useProduct({ id: 'gid://shopify/Product/123' })
+  console.log({product, loading, error})
+}
+```
+
+## useProductList
+
+Fetch a list of products saved by the user.
+
+```tsx
+import {useProductList} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {productList, loading, error} = useProductList({ id: 'gid://shopapp/ProductList/123' })
+  console.log({productList, loading, error})
+}
+```
+
+## useProductListActions
+
+Manage product lists.
+
+```tsx
+import {useProductListActions, Button} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const { addProductList, removeProductList, renameProductList, addProductListItem, removeProductListItem } = useProductListActions()
+  return (
+    <>
+      <Button onClick={() => addProductList({ name: 'My product list' })}>Add product list</Button>
+      <Button onClick={() => removeProductList({ id: 'gid://shopapp/ProductList/123' })}>Remove product list</Button>
+      <Button onClick={() => renameProductList({ id: 'gid://shopapp/ProductList/123', name: 'My renamed product list' })}>Rename product list</Button>
+      <Button onClick={() => addProductListItem({ shopId: 'gid://shopify/Shop/42', productId: 'gid://shopify/Product/123', productVariantId: 'gid://shopify/ProductVariant/101', listId: 'gid://shopapp/ProductList/99', publicListId: 'abc123' })}>Add product to list</Button>
+      <Button onClick={() => removeProductListItem({ shopId: 'gid://shopify/Shop/42', productId: 'gid://shopify/Product/123', productVariantId: 'gid://shopify/ProductVariant/101', listId: 'gid://shopapp/ProductList/99', publicListId: 'abc123' })}>Remove product from list</Button>
+    </>
+  )
+}
+```
+
+## useProductLists
+
+Fetch all product lists for the user.
+
+```tsx
+import {useProductLists} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {productLists, loading, error} = useProductLists({ first: 10 })
+  console.log({productLists, loading, error})
+}
+```
+
+## useProductMedia
+
+Fetch media items for a product.
+
+```tsx
+import {useProductMedia, Button} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {media, loading, error, hasNextPage, loadMore} = useProductMedia({ id: 'gid://shopify/Product/123', first: 10 })
+  console.log({media, loading, error})
+  return hasNextPage ? <Button onClick={loadMore} disabled={loading}>Load More Media</Button> : null
+}
+```
+
+## useProductSearch
+
+Fetch products by a search query.
+
+```tsx
+import {useProductSearch} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {products, loading} = useProductSearch({ query: 'shirt', first: 10, filters: { color: ['RED'] } })
+  console.log({products, loading})
+}
+```
+
+## useProductVariants
+
+Fetch product variants for a product.
+
+```tsx
+import {useProductVariants, Button} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {variants, loading, error, hasNextPage, loadMore} = useProductVariants({ id: 'gid://shopify/Product/123', first: 10 })
+  console.log({variants, loading, error})
+  return hasNextPage ? <Button onClick={loadMore} disabled={loading}>Load More Variants</Button> : null
+}
+```
+
+## useProducts
+
+Fetch multiple products by IDs.
+
+```tsx
+import {useProducts} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {products, loading, error} = useProducts({ ids: [ 'gid://shopify/Product/123', 'gid://shopify/Product/456', 'gid://shopify/Product/789' ] })
+  console.log({products, loading, error})
+}
+```
+
+## useRecentProducts
+
+Fetch recently viewed products.
+
+```tsx
+import {useEffect} from 'react'
+import {useRecentProducts, Button} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {products, fetchMore} = useRecentProducts({ first: 10 })
+  useEffect(() => { console.log(products) }, [products])
+  return <Button onClick={fetchMore}>Fetch more</Button>
+}
+```
+
+## useRecentShops
+
+Fetch shops the user recently interacted with.
+
+```tsx
+import {useRecentShops, Button} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {shops, loading, error, hasNextPage, loadMore} = useRecentShops({ first: 10 })
+  console.log({shops, loading, error})
+  return hasNextPage ? <Button onClick={loadMore} disabled={loading}>Load More</Button> : null
+}
+```
+
+## useRecommendedProducts
+
+Fetch recommended products for the user (may be empty).
+
+```tsx
+import {useRecommendedProducts} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {products, loading, error} = useRecommendedProducts()
+  console.log({products, loading, error})
+}
+```
+
+## useRecommendedShops
+
+Fetch recommended shops for the user (may be empty).
+
+```tsx
+import {useRecommendedShops} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {shops, loading, error} = useRecommendedShops()
+  console.log({shops, loading, error})
+}
+```
+
+## useSavedProducts
+
+Fetch saved products for the current user.
+
+```tsx
+import {useEffect} from 'react'
+import {useSavedProducts, Button} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {products, fetchMore} = useSavedProducts({ first: 10 })
+  useEffect(() => { console.log(products) }, [products])
+  return <Button onClick={fetchMore}>Fetch more</Button>
+}
+```
+
+## useSavedProductsActions
+
+Save/unsave products for the current user.
+
+```tsx
+import {useSavedProductsActions, Button} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {saveProduct, unsaveProduct} = useSavedProductsActions()
+  return (
+    <>
+      <Button onClick={() => saveProduct({ productId: 'gid://shopify/Product/123', productVariantId: 'gid://shopify/ProductVariant/456', shopId: 'gid://shopify/Shop/42' })}>Save product</Button>
+      <Button onClick={() => unsaveProduct({ productId: 'gid://shopify/Product/123', productVariantId: 'gid://shopify/ProductVariant/456', shopId: 'gid://shopify/Shop/42' })}>Unsave product</Button>
+    </>
+  )
+}
+```
+
+## useSecureStorage
+
+Encrypted secure storage (one secret per Mini).
+
+```tsx
+import {useEffect} from 'react'
+import {useSecureStorage} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {getSecret, setSecret, removeSecret} = useSecureStorage()
+  useEffect(() => {
+    (async () => {
+      const secret = await getSecret()
+      console.log({secret})
+      await setSecret({ value: 'Sensitive Data' })
+      await removeSecret()
+    })()
+  }, [getSecret, setSecret, removeSecret])
+}
+```
+
+## useShare
+
+Native share sheet.
+
+```tsx
+import {useShare, Button} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {share} = useShare()
+  return (
+    <Button onClick={async () => {
+      const result = await share({ title: 'Check out this product!', text: 'I found this amazing product on Shop', url: 'https://shop.app/products/123' })
+      console.log({shareResult: result})
+    }}>
+      Share
+    </Button>
+  )
+}
+```
+
+## useShop
+
+Fetch a shop by ID.
+
+```tsx
+import {useShop} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {shop, loading, error} = useShop({ id: 'gid://shopify/Shop/1234567890' })
+  console.log({shop, loading, error})
+}
+```
+
+## useShopCartActions
+
+Add to cart / Buy now.
+
+```tsx
+import {Button, useShopCartActions} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {addToCart, buyProduct} = useShopCartActions()
+  return (
+    <>
+      <Button onClick={() => addToCart({ productId: 'gid://shopify/Product/123', productVariantId: 'gid://shopify/ProductVariant/456', quantity: 1 })}>Add to cart</Button>
+      <Button onClick={() => buyProduct({ productId: 'gid://shopify/Product/123', productVariantId: 'gid://shopify/ProductVariant/456', quantity: 1 })}>Buy now</Button>
+    </>
+  )
+}
+```
+
+## useShopNavigation
+
+Navigate to native Shop surfaces.
+
+```tsx
+import {useShopNavigation, Button} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {navigateToProduct, navigateToShop, navigateToOrder, navigateToCheckout} = useShopNavigation()
+  return (
+    <>
+      <Button onClick={() => navigateToProduct({ productId: 'gid://shopify/Product/123' })}>View Product</Button>
+      <Button onClick={() => navigateToShop({ shopId: 'gid://shopify/Shop/123' })}>Go to Shop</Button>
+      <Button onClick={() => navigateToOrder({ orderId: 'gid://shopify/Order/123' })}>View Order</Button>
+      <Button onClick={() => navigateToCheckout({ shopId: 'gid://shopify/Shop/123' })}>Go to Checkout</Button>
+    </>
+  )
+}
+```

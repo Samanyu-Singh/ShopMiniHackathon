@@ -1,11 +1,16 @@
-import {useState, useCallback, useEffect} from 'react'
-import {Button, Avatar, AvatarImage, AvatarFallback, Touchable, Card, CardContent} from '@shopify/shop-minis-react'
+import {useState, useCallback, useEffect, useMemo} from 'react'
+import {Button, Touchable, useCurrentUser} from '@shopify/shop-minis-react'
 import {Collector} from './components/Collector'
 import {UserFeed} from './components/UserFeed'
 import {FriendsFeed} from './components/FriendsFeed'
+import {SharedItemsFeed} from './components/SharedItemsFeed'
+import {Friends} from './components/Friends'
+import {Profile} from './components/Profile'
+import {Stories} from './components/Stories'
+import {ThemeToggle} from './components/ThemeToggle'
 import {supabase} from './lib/supa'
 
-type View = 'home' | 'feed' | 'stories' | 'search'
+type View = 'home' | 'feed' | 'stories' | 'search' | 'voting' | 'friends' | 'profile'
 
 type FeedView = {
   userId: string
@@ -42,6 +47,14 @@ type UserProfile = {
 }
 
 export function App() {
+  const {currentUser} = useCurrentUser()
+  
+  // Generate stable user ID from displayName (matching Collector.tsx pattern)
+  const currentUserId = useMemo(() => {
+    if (!currentUser?.displayName) return 'user_unknown'
+    return `user_${currentUser.displayName.toLowerCase().replace(/\s+/g, '_')}`
+  }, [currentUser?.displayName])
+  
   const [view, setView] = useState<View>('home')
   const [feedView, setFeedView] = useState<FeedView | null>(null)
   const [userProfiles, setUserProfiles] = useState<UserProfile[]>([])
@@ -50,6 +63,22 @@ export function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showSearchModal, setShowSearchModal] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(true) // Default to dark mode like Linear
+
+  // Debug view changes
+  useEffect(() => {
+    console.log('🔄 View changed to:', view)
+  }, [view])
+
+  // Debug current user
+  useEffect(() => {
+    console.log('👤 Current user debug:', {
+      currentUser: currentUser?.displayName,
+      currentUserId,
+      userProfilesCount: userProfiles.length,
+      userProfileIds: userProfiles.map(p => p.user_id),
+      availableUsers: userProfiles.map(p => ({ id: p.user_id, name: p.display_name, handle: p.handle }))
+    })
+  }, [userProfiles, currentUser, currentUserId])
 
   // Haptic feedback function
   const triggerHaptic = useCallback(() => {
@@ -98,15 +127,41 @@ export function App() {
     setRefreshKey(prev => prev + 1)
   }, [triggerHaptic])
 
-  const handleStoriesClick = useCallback(() => {
-    triggerHaptic()
-    setView('stories')
-  }, [triggerHaptic])
+
 
   const handleSearchClick = useCallback(() => {
     triggerHaptic()
     setShowSearchModal(true)
   }, [triggerHaptic])
+
+  const handleVotingClick = useCallback(() => {
+    console.log('🗳️ Voting button clicked!')
+    
+    // Trigger haptic feedback
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50)
+    }
+    
+    // Set view immediately
+    setView('voting')
+    console.log('View set to voting')
+  }, [])
+
+  const handleShareItemClick = useCallback(() => {
+    triggerHaptic()
+    console.log('📤 Share item clicked!')
+    
+    // Use the first available user profile as fallback
+    // In a real app, you'd get this from the Shopify Mini SDK like Collector does
+    if (userProfiles.length > 0) {
+      const firstUser = userProfiles[0]
+      console.log('✅ Using first available user for sharing:', firstUser)
+      handleViewFeed(firstUser.user_id, firstUser.handle)
+    } else {
+      console.log('❌ No user profiles available')
+      // Show a message or handle this case
+    }
+  }, [userProfiles, triggerHaptic])
 
   const handleSearchSubmit = useCallback((query: string) => {
     triggerHaptic()
@@ -220,34 +275,74 @@ export function App() {
         <FriendsFeed
           onBack={handleBack}
           onViewUserFeed={handleViewFeed}
+          isDarkMode={isDarkMode}
+          onToggleDarkMode={toggleDarkMode}
+          currentUserId={currentUserId}
         />
       )
     } else {
       return (
-        <div className="pt-12 px-4 pb-6">
-          <UserFeed
-            userId={feedView.userId}
-            handle={feedView.handle}
-            onBack={handleBack}
-          />
+        <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-purple-100 text-gray-900'}`}>
+          <div className="pt-12 px-4 pb-6">
+            <UserFeed
+              userId={feedView.userId}
+              handle={feedView.handle}
+              onBack={handleBack}
+              isDarkMode={isDarkMode}
+              currentUserId={currentUserId}
+            />
+          </div>
         </div>
       )
     }
   }
 
+  // Voting view
+  if (view === 'voting') {
+    return (
+      <SharedItemsFeed
+        onBack={handleBack}
+        onShareItem={handleShareItemClick}
+        currentUserId={currentUserId}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={toggleDarkMode}
+      />
+    )
+  }
+
+  // Friends view
+  if (view === 'friends') {
+    return (
+      <Friends
+        onBack={handleBack}
+        currentUserId={currentUserId}
+        isDarkMode={isDarkMode}
+      />
+    )
+  }
+
+  // Profile view
+  if (view === 'profile') {
+    return (
+      <Profile
+        onBack={handleBack}
+        onViewSaved={() => {
+          // Use the first available user profile as fallback
+          if (userProfiles.length > 0) {
+            const firstUser = userProfiles[0]
+            handleViewFeed(firstUser.user_id, firstUser.handle)
+          }
+        }}
+        isDarkMode={isDarkMode}
+      />
+    )
+  }
+
   // Stories view
   if (view === 'stories') {
     return (
-      <div className="pt-12 px-4 pb-6">
-        <div className="flex items-center gap-3 mb-6">
-          <Button onClick={handleBack} variant="secondary">← Back</Button>
-          <h1 className="text-xl font-bold">Stories</h1>
-        </div>
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">📱</div>
-          <h2 className="text-2xl font-bold mb-2">Stories Coming Soon</h2>
-          <p className="text-gray-600">Share your shopping moments with friends</p>
-        </div>
+      <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-purple-100 text-gray-900'}`}>
+        <Stories onBack={handleBack} />
       </div>
     )
   }
@@ -257,7 +352,7 @@ export function App() {
     <div className={`min-h-screen relative overflow-hidden transition-colors duration-500 ${
       isDarkMode 
         ? 'bg-black text-white' 
-        : 'bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900'
+        : 'bg-purple-100 text-gray-900'
     }`}>
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden">
@@ -283,23 +378,7 @@ export function App() {
         <div className="text-center mb-12">
           <div className="flex justify-between items-center mb-8">
             <div></div> {/* Spacer */}
-            <div className="flex items-center gap-4">
-              {/* Theme Toggle */}
-              <Touchable onClick={toggleDarkMode}>
-                <div className={`w-12 h-6 rounded-full transition-all duration-300 flex items-center p-1 ${
-                  isDarkMode 
-                    ? 'bg-gray-700 justify-end' 
-                    : 'bg-gray-300 justify-start'
-                }`}>
-                  <div className={`w-4 h-4 rounded-full transition-all duration-300 ${
-                    isDarkMode ? 'bg-white' : 'bg-white'
-                  }`}></div>
-                </div>
-              </Touchable>
-              <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                {isDarkMode ? '🌙' : '☀️'}
-              </span>
-            </div>
+            <ThemeToggle isDarkMode={isDarkMode} onToggle={toggleDarkMode} />
           </div>
           
           <div className={`inline-block p-3 rounded-2xl shadow-lg mb-4 transition-all duration-500 ${
@@ -330,114 +409,83 @@ export function App() {
             setView('feed')
             setFeedView({userId: 'all', handle: 'friends'})
           }}>
-            <div className={`group absolute top-8 left-8 w-20 h-20 rounded-full flex flex-col justify-center items-center shadow-2xl transition-all duration-700 animate-float-1 ${
-              isDarkMode 
-                ? 'bg-gradient-to-br from-gray-700 via-gray-600 to-gray-800 hover:shadow-gray-600/50' 
-                : 'bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-600 hover:shadow-blue-500/50'
-            }`}>
-              <div className="text-2xl transform group-hover:scale-125 transition-transform duration-300">👥</div>
-              <div className={`absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap ${
-                isDarkMode ? 'bg-gray-800 text-gray-200' : 'bg-black/80 text-white'
-              }`}>
+            <div className="group absolute top-8 left-8 w-20 h-20 rounded-full flex flex-col justify-center items-center shadow-2xl transition-all duration-700 animate-float-1 bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-600 hover:shadow-blue-500/50">
+              <div className="text-2xl transform group-hover:scale-125 transition-transform duration-300">✨</div>
+              <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap bg-black/80 text-white">
                 {userProfiles.length} friends
               </div>
             </div>
           </Touchable>
 
-          {/* Stories Bubble */}
-          <Touchable onClick={handleStoriesClick}>
-            <div className={`group absolute top-16 right-12 w-16 h-16 rounded-full flex flex-col justify-center items-center shadow-2xl transition-all duration-700 animate-float-2 ${
-              isDarkMode 
-                ? 'bg-gradient-to-br from-gray-600 via-gray-500 to-gray-700 hover:shadow-gray-500/50' 
-                : 'bg-gradient-to-br from-purple-400 via-purple-500 to-pink-600 hover:shadow-purple-500/50'
-            }`}>
-              <div className="text-xl transform group-hover:scale-125 transition-transform duration-300">📱</div>
-              <div className={`absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap ${
-                isDarkMode ? 'bg-gray-800 text-gray-200' : 'bg-black/80 text-white'
-              }`}>
-                Coming soon
+          {/* Friends Bubble */}
+          <Touchable onClick={() => {
+            triggerHaptic()
+            setView('friends')
+          }}>
+            <div className="group absolute top-16 right-12 w-16 h-16 rounded-full flex flex-col justify-center items-center shadow-2xl transition-all duration-700 animate-float-2 bg-gradient-to-br from-purple-400 via-purple-500 to-pink-600 hover:shadow-purple-500/50">
+              <div className="text-xl transform group-hover:scale-125 transition-transform duration-300">👥</div>
+              <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap bg-black/80 text-white">
+                Friends
               </div>
             </div>
           </Touchable>
 
           {/* Search Bubble */}
           <Touchable onClick={handleSearchClick}>
-            <div className={`group absolute top-32 left-1/2 transform -translate-x-1/2 w-18 h-18 rounded-full flex flex-col justify-center items-center shadow-2xl transition-all duration-700 animate-float-3 ${
-              isDarkMode 
-                ? 'bg-gradient-to-br from-gray-700 via-gray-600 to-gray-800 hover:shadow-gray-600/50' 
-                : 'bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 hover:shadow-green-500/50'
-            }`}>
+            <div className="group absolute top-32 left-1/2 transform -translate-x-1/2 w-18 h-18 rounded-full flex flex-col justify-center items-center shadow-2xl transition-all duration-700 animate-float-3 bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 hover:shadow-green-500/50">
               <div className="text-2xl transform group-hover:scale-125 transition-transform duration-300">🔍</div>
-              <div className={`absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap ${
-                isDarkMode ? 'bg-gray-800 text-gray-200' : 'bg-black/80 text-white'
-              }`}>
+              <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap bg-black/80 text-white">
                 Find products
               </div>
             </div>
           </Touchable>
 
-          {/* Coming Soon Bubble */}
-          <Touchable onClick={triggerHaptic}>
-            <div className={`group absolute bottom-16 left-16 w-14 h-14 rounded-full flex flex-col justify-center items-center shadow-2xl transition-all duration-700 animate-float-4 ${
-              isDarkMode 
-                ? 'bg-gradient-to-br from-gray-600 via-gray-500 to-gray-700 hover:shadow-gray-500/50' 
-                : 'bg-gradient-to-br from-slate-400 via-gray-500 to-zinc-600 hover:shadow-gray-500/50'
-            }`}>
-              <div className="text-lg transform group-hover:scale-125 transition-transform duration-300">✨</div>
-              <div className={`absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap ${
-                isDarkMode ? 'bg-gray-800 text-gray-200' : 'bg-black/80 text-white'
-              }`}>
-                Stay tuned
-              </div>
+          {/* Profile Bubble */}
+          <button 
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              console.log('👤 Profile button clicked!')
+              triggerHaptic()
+              setView('profile')
+            }}
+            className="group absolute bottom-16 left-16 w-14 h-14 rounded-full flex flex-col justify-center items-center shadow-2xl transition-all duration-700 animate-float-4 cursor-pointer bg-gradient-to-br from-slate-400 via-gray-500 to-zinc-600 hover:shadow-gray-500/50"
+          >
+            <div className="text-lg transform group-hover:scale-125 transition-transform duration-300">👤</div>
+            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap bg-black/80 text-white">
+              Profile
             </div>
-          </Touchable>
+          </button>
 
-          {/* Center Target Bubble */}
-          <Touchable onClick={triggerHaptic}>
-            <div className={`group absolute bottom-8 right-8 w-24 h-24 rounded-full flex flex-col justify-center items-center shadow-2xl transition-all duration-700 animate-float-5 ${
-              isDarkMode 
-                ? 'bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 hover:shadow-gray-700/50' 
-                : 'bg-gradient-to-br from-orange-400 via-red-500 to-pink-600 hover:shadow-red-500/50'
-            }`}>
-              <div className="text-3xl transform group-hover:scale-125 transition-transform duration-300">🎯</div>
-              <div className={`absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap ${
-                isDarkMode ? 'bg-gray-800 text-gray-200' : 'bg-black/80 text-white'
-              }`}>
-                Target
-              </div>
+          {/* Voting Bubble */}
+          <button 
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              console.log('🗳️ Button clicked directly!')
+              handleVotingClick()
+            }}
+            className="group absolute bottom-8 right-8 w-24 h-24 rounded-full flex flex-col justify-center items-center shadow-2xl transition-all duration-700 animate-float-5 cursor-pointer bg-gradient-to-br from-orange-400 via-red-500 to-pink-600 hover:shadow-red-500/50"
+          >
+            <div className="text-3xl transform group-hover:scale-125 transition-transform duration-300">🗳️</div>
+            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap bg-black/80 text-white">
+              Vote
             </div>
-          </Touchable>
+          </button>
 
-          {/* Floating particles for space effect */}
-          <div className="absolute inset-0 pointer-events-none">
-            <div className={`absolute top-10 left-1/4 w-1 h-1 rounded-full animate-pulse ${
-              isDarkMode ? 'bg-gray-400/60' : 'bg-white/60'
-            }`}></div>
-            <div className={`absolute top-20 right-1/3 w-1 h-1 rounded-full animate-pulse delay-1000 ${
-              isDarkMode ? 'bg-gray-500/60' : 'bg-blue-400/60'
-            }`}></div>
-            <div className={`absolute top-40 left-1/2 w-1 h-1 rounded-full animate-pulse delay-2000 ${
-              isDarkMode ? 'bg-gray-400/60' : 'bg-purple-400/60'
-            }`}></div>
-            <div className={`absolute bottom-20 left-1/3 w-1 h-1 rounded-full animate-pulse delay-1500 ${
-              isDarkMode ? 'bg-gray-500/60' : 'bg-pink-400/60'
-            }`}></div>
-            <div className={`absolute bottom-32 right-1/4 w-1 h-1 rounded-full animate-pulse delay-500 ${
-              isDarkMode ? 'bg-gray-400/60' : 'bg-yellow-400/60'
-            }`}></div>
-          </div>
+
         </div>
       </div>
 
       {/* Search Modal */}
       {showSearchModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-          <div className={`backdrop-blur-md rounded-3xl p-8 w-full max-w-md shadow-2xl border animate-in slide-in-from-bottom-4 duration-300 ${
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start justify-center z-50 p-4 pt-20 animate-in fade-in duration-300">
+          <div className={`backdrop-blur-md rounded-3xl p-8 w-full max-w-md shadow-2xl border animate-in slide-in-from-top-4 duration-300 ${
             isDarkMode 
               ? 'bg-gray-900/95 border-gray-800' 
               : 'bg-white/95 border-white/20'
           }`}>
-            <div className="flex items-center justify-between mb-6">
+            <div className="mb-6 text-center">
               <h2 className={`text-2xl font-bold transition-all duration-500 ${
                 isDarkMode 
                   ? 'bg-gradient-to-r from-gray-100 via-white to-gray-200 bg-clip-text text-transparent' 
@@ -445,17 +493,6 @@ export function App() {
               }`}>
                 Search Products
               </h2>
-              <Touchable onClick={() => setShowSearchModal(false)}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-200 ${
-                  isDarkMode 
-                    ? 'bg-gray-800 hover:bg-gray-700' 
-                    : 'bg-gray-100 hover:bg-gray-200'
-                }`}>
-                  <span className={`text-lg transition-colors duration-200 ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                  }`}>✕</span>
-                </div>
-              </Touchable>
             </div>
             <div className="space-y-6">
               <div className="relative">

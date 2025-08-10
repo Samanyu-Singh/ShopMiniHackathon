@@ -1,0 +1,323 @@
+---
+
+name: Cursor Rules – Shop Minis (3) Hooks A–M
+summary: Complete hook reference (A–M) for @shopify/shop-minis-react. All usage patterns exactly as provided.
+-------------------------------------------------------------------------------------------------------------
+
+# Hooks A–M
+
+Import hooks from `@shopify/shop-minis-react`. Keep prop and return signatures unchanged.
+
+## useAsyncStorage
+
+Persistent, non-sensitive storage across sessions.
+
+```tsx
+import {useEffect} from 'react'
+import {useAsyncStorage} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {getItem, setItem, removeItem, getAllKeys, clear} = useAsyncStorage()
+
+  useEffect(() => {
+    async function handleStorageOperations() {
+      const value = await getItem({key: 'myKey'})
+      console.log({value})
+      await setItem({key: 'myKey', value: 'Hello, World!'})
+      await removeItem({key: 'myKey'})
+      const keys = await getAllKeys()
+      console.log({keys})
+      await clear()
+    }
+    handleStorageOperations()
+  }, [getItem, removeItem, setItem, getAllKeys, clear])
+}
+```
+
+## useBuyerAttributes
+
+Fetches the current buyer attributes, such as gender affinity and category affinities.
+
+```tsx
+import {useEffect} from 'react'
+import {useBuyerAttributes} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {buyerAttributes} = useBuyerAttributes()
+
+  useEffect(() => {
+    if (buyerAttributes) {
+      const {genderAffinity, categoryAffinities} = buyerAttributes
+      console.log({genderAffinity, categoryAffinities})
+    }
+  }, [buyerAttributes])
+}
+```
+
+## useCloseMini
+
+Close the Mini viewer.
+
+```tsx
+import {useCloseMini, Button} from '@shopify/shop-minis-react'
+
+export function Example() {
+  const {closeMini} = useCloseMini()
+  return <Button onClick={closeMini}>Close Mini</Button>
+}
+```
+
+## useCreateImageContent
+
+Uploads an image file and creates content with the uploaded image.
+
+```tsx
+import {useCreateImageContent, useImagePicker, Button} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {createImageContent, loading} = useCreateImageContent()
+  const {openCamera, openGallery} = useImagePicker()
+
+  const handleCameraCapture = async () => {
+    try {
+      const file = await openCamera()
+      const result = await createImageContent({
+        image: file,
+        contentTitle: 'Photo from camera',
+        visibility: ['PUBLIC'],
+      })
+      console.log({data: result.data, userErrors: result.userErrors})
+    } catch (error) {
+      console.error('Failed to capture and upload image:', error)
+    }
+  }
+
+  const handleGallerySelect = async () => {
+    try {
+      const file = await openGallery()
+      const result = await createImageContent({
+        image: file,
+        contentTitle: 'Photo from gallery',
+        visibility: ['PUBLIC'],
+      })
+      console.log({data: result.data, userErrors: result.userErrors})
+    } catch (error) {
+      console.error('Failed to select and upload image:', error)
+    }
+  }
+
+  return (
+    <>
+      <Button onClick={handleCameraCapture} disabled={loading}>Take Photo and Upload</Button>
+      <Button onClick={handleGallerySelect} disabled={loading}>Select from Gallery and Upload</Button>
+      {loading && <p>Uploading image...</p>}
+    </>
+  )
+}
+```
+
+## useCurrentUser
+
+Fetches the current user.
+
+```tsx
+import {useCurrentUser} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {currentUser} = useCurrentUser()
+  console.log(currentUser)
+}
+```
+
+## useCuratedProducts
+
+Enables fetching lists of products curated by the Shop team.
+
+```tsx
+import {useCuratedProducts} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {products, loading, error} = useCuratedProducts({
+    handle: 'ar-models',
+    requiredTags: ['furniture'],
+  })
+  console.log({products, loading, error})
+}
+```
+
+## useDeeplink
+
+Returns the path, query parameters, and hash parameters of the deep link URL that opened the Mini.
+
+```tsx
+import {useDeeplink} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {path, queryParams, hash} = useDeeplink()
+  console.log({path, queryParams, hash})
+}
+```
+
+## useErrorScreen
+
+Show error screens programmatically.
+
+```tsx
+import {useCallback} from 'react'
+import {useErrorScreen, Button} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {showErrorScreen} = useErrorScreen()
+  const handleError = useCallback(() => {
+    showErrorScreen({message: 'Something went wrong'})
+  }, [showErrorScreen])
+  return <Button onClick={handleError}>Show error screen</Button>
+}
+```
+
+## useErrorToast
+
+Show error toasts programmatically.
+
+```tsx
+import {useCallback} from 'react'
+import {useErrorToast, Button} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {showErrorToast} = useErrorToast()
+  const handleError = useCallback(() => {
+    showErrorToast({message: 'Something went wrong'})
+  }, [showErrorToast])
+  return <Button onClick={handleError}>Show error toast</Button>
+}
+```
+
+## useFollowedShops
+
+Fetches shops that the current user is following.
+
+```tsx
+import {useFollowedShops, Button} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {shops, loading, error, hasNextPage, loadMore} = useFollowedShops({first: 10})
+  console.log({shops, loading, error})
+  return (
+    <>
+      {hasNextPage && (
+        <Button onClick={loadMore} disabled={loading}>Load More</Button>
+      )}
+    </>
+  )
+}
+```
+
+## useFollowedShopsActions
+
+Allows following and unfollowing shops for the current user.
+
+```tsx
+import {useFollowedShopsActions, Button} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {followShop, unfollowShop} = useFollowedShopsActions()
+  return (
+    <>
+      <Button onClick={() => followShop({shopId: 'gid://shopify/Shop/123'})}>Follow shop</Button>
+      <Button onClick={() => unfollowShop({shopId: 'gid://shopify/Shop/123'})}>Unfollow shop</Button>
+    </>
+  )
+}
+```
+
+## useImagePicker
+
+Provides access to camera and gallery functionality for selecting images.
+
+```tsx
+import {useState} from 'react'
+import {useImagePicker, Button} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {openCamera, openGallery} = useImagePicker()
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+
+  const handleCameraCapture = async () => {
+    try {
+      const file = await openCamera('front')
+      const url = URL.createObjectURL(file)
+      setSelectedImage(url)
+    } catch (error) {
+      console.error('Failed to capture image:', error)
+    }
+  }
+
+  const handleGallerySelect = async () => {
+    try {
+      const file = await openGallery()
+      const url = URL.createObjectURL(file)
+      setSelectedImage(url)
+    } catch (error) {
+      console.error('Failed to select image:', error)
+    }
+  }
+
+  return (
+    <>
+      <Button onClick={handleCameraCapture}>Open Camera</Button>
+      <Button onClick={handleGallerySelect}>Open Gallery</Button>
+      {selectedImage && <img src={selectedImage} alt="Selected" />}
+    </>
+  )
+}
+```
+
+## useImageUpload
+
+Provides functionality for uploading images attached to the current user.
+
+```tsx
+import {useCallback} from 'react'
+import {useImageUpload, Button} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {uploadImage} = useImageUpload()
+  const handleUpload = useCallback(async () => {
+    const result = await uploadImage([{mimeType: 'image/jpeg', uri: 'file://path/to/image.jpg'}])
+    console.log('Uploaded image:', result[0])
+  }, [uploadImage])
+  return <Button onClick={handleUpload}>Upload image</Button>
+}
+```
+
+## useNavigateWithTransition
+
+Provides navigation with view transitions support for smoother page changes.
+
+```tsx
+import {useNavigateWithTransition, Button} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const transitionNavigate = useNavigateWithTransition()
+
+  return (
+    <>
+      <Button onClick={() => transitionNavigate('/products/123')}>View Product</Button>
+      <Button onClick={() => transitionNavigate(-1)}>Go Back</Button>
+    </>
+  )
+}
+```
+
+## useOrders
+
+Returns a set of recent Shopify orders for the current user.
+
+```tsx
+import {useOrders} from '@shopify/shop-minis-react'
+
+export default function MyComponent() {
+  const {orders, loading, error} = useOrders()
+  console.log({orders, loading, error})
+}
+```
