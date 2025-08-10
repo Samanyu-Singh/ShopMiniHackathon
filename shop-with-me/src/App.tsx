@@ -504,7 +504,7 @@ export function App() {
                 ? 'bg-gradient-to-r from-gray-100 via-white to-gray-200 bg-clip-text text-transparent' 
                 : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent'
             }`}>
-              Shop Together
+              StyleSync
             </h1>
           </div>
           <p className={`font-medium text-lg transition-colors duration-500 ${
