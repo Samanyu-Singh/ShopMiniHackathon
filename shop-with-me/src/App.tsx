@@ -1,28 +1,54 @@
-import {Button} from '@shopify/shop-minis-react'
-import {useCallback} from 'react'
+import {useState} from 'react'
+import {Collector} from './components/Collector'
+import {UserList} from './components/UserList'
+import {UserFeed} from './components/UserFeed'
+
+type View = 'main' | 'feed'
+
+type FeedView = {
+  userId: string
+  handle: string
+}
 
 export function App() {
-  // Friend-focused shell only; self-related feeds removed
-  const handleInviteFriends = useCallback(() => {
-    console.log('Invite friends clicked')
-  }, [])
+  const [view, setView] = useState<View>('main')
+  const [feedView, setFeedView] = useState<FeedView | null>(null)
+
+  const handleViewFeed = (userId: string, handle: string) => {
+    setFeedView({userId, handle})
+    setView('feed')
+  }
+
+  const handleBack = () => {
+    setView('main')
+    setFeedView(null)
+  }
+
+  if (view === 'feed' && feedView) {
+    return (
+      <div className="pt-12 px-4 pb-6">
+        <UserFeed
+          userId={feedView.userId}
+          handle={feedView.handle}
+          onBack={handleBack}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="pt-12 px-4 pb-6">
-      <h1 className="text-2xl font-bold mb-2 text-center">Friends’ products</h1>
+      <h1 className="text-2xl font-bold mb-2 text-center">Shop With Friends</h1>
       <p className="text-sm text-gray-600 mb-6 text-center">
-        Connect with friends to see products they choose to share.
+        See what products your friends are discovering
       </p>
 
-      {/* Empty state for friend feed before integration */}
-      <div className="text-center text-gray-600 mt-6">
-        <p className="mb-3">No friends connected yet.</p>
-        <p className="text-sm mb-6">
-          When friends opt in, their shared saved/recent products will appear here.
-        </p>
-        <div className="max-w-xs mx-auto">
-          <Button onClick={handleInviteFriends}>Invite friends</Button>
-        </div>
+      {/* Automatic data collector - runs when app opens */}
+      <Collector />
+
+      {/* User list - shows all users using the app */}
+      <div className="mb-6">
+        <UserList onViewFeed={handleViewFeed} />
       </div>
     </div>
   )
