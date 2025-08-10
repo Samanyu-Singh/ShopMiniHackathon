@@ -158,7 +158,7 @@ export function ShareItemModal({product, userId, onClose, onSuccess}: Props) {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-              <Share2 className="w-5 h-5 text-white" />
+              <Share2 className="w-5 h-5 text-black" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">Share for Voting</h2>
@@ -213,9 +213,9 @@ export function ShareItemModal({product, userId, onClose, onSuccess}: Props) {
 
         {/* Share Message Input */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-black mb-2">
             <div className="flex items-center gap-2">
-              <MessageCircle className="w-4 h-4" />
+              <MessageCircle className="w-4 h-4 text-black" />
               Optional Message
             </div>
           </label>
@@ -223,10 +223,10 @@ export function ShareItemModal({product, userId, onClose, onSuccess}: Props) {
             placeholder="Why should others vote on this item? (optional)"
             value={shareMessage}
             onChange={(e) => setShareMessage(e.target.value)}
-            className="w-full"
+            className="w-full text-black placeholder-black"
             maxLength={200}
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-black mt-1">
             {shareMessage.length}/200 characters
           </p>
         </div>
@@ -253,7 +253,7 @@ export function ShareItemModal({product, userId, onClose, onSuccess}: Props) {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Share2 className="w-4 h-4" />
+                <Share2 className="w-4 h-4 text-black" />
                 Share Item
               </div>
             )}

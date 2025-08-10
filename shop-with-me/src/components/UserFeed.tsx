@@ -330,7 +330,7 @@ export function UserFeed({userId, handle, onBack, isDarkMode}: Props) {
           })
 
           return (
-            <div key={product.id} className="relative">
+            <div key={product.id} className={`relative ${isDarkMode ? 'smr-dark-card' : ''}`}>
               <ProductCard
                 product={productForCard as any}
                 onFavoriteToggled={handleFavoriteToggled}
@@ -344,7 +344,7 @@ export function UserFeed({userId, handle, onBack, isDarkMode}: Props) {
                   }}
                   className="bg-white/90 hover:bg-white shadow-lg hover:shadow-xl transition-all duration-300 w-10 h-10 rounded-full flex items-center justify-center"
                 >
-                  <Share2 className="w-5 h-5 text-black" />
+                  <Share2 className={'w-5 h-5 text-black'} />
                 </button>
               </div>
             </div>

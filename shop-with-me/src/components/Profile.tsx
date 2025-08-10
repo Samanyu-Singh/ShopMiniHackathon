@@ -273,7 +273,11 @@ export function Profile({onBack, onViewSaved, isDarkMode}: Props) {
   console.log('👤 Profile - Profile pic URL:', profilePicUrl)
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-purple-100 text-gray-900'} pt-12 pb-6`}>
+    <div className={`min-h-screen ${
+      isDarkMode
+        ? 'bg-gradient-to-b from-purple-900 via-black to-black text-white'
+        : 'bg-gradient-to-b from-purple-100 via-purple-200 to-purple-300 text-gray-900'
+    } pt-12 pb-6`}>
       {/* Header */}
       <div className="px-6 mb-8">
         <div className="flex justify-between items-center mb-6">
