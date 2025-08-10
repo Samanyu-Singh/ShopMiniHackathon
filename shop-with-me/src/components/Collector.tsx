@@ -10,7 +10,23 @@ import {debug} from '../lib/debug'
 
 type ProductEvent = {
   product_id: string
-  shop_id?: string
+  product_data: {
+    id: string
+    title: string
+    description?: string
+    price?: {
+      amount: string
+      currencyCode: string
+    }
+    images?: Array<{
+      url: string
+      altText?: string
+    }>
+    shop?: {
+      id: string
+      name?: string
+    }
+  }
   source: 'recommended_products' | 'recommended_shops' | 'product_lists'
   added_at: string
 }
@@ -48,15 +64,32 @@ export function Collector() {
     const saveUserFeed = async () => {
       console.log('💾 Saving user feed for:', userId)
 
-      // Create product events from all sources
+      // Create product events from all sources with full product data
       const toProductEvent = (
         item: any,
         source: ProductEvent['source']
       ): ProductEvent | null => {
         if (!item?.id) return null
+        
         return {
           product_id: item.id,
-          shop_id: item.shop?.id,
+          product_data: {
+            id: item.id,
+            title: item.title || `Product ${item.id}`,
+            description: item.description,
+            price: item.price ? {
+              amount: item.price.amount || '0.00',
+              currencyCode: item.price.currencyCode || 'USD'
+            } : undefined,
+            images: item.images ? item.images.map((img: any) => ({
+              url: img.url || img.src,
+              altText: img.altText || img.alt
+            })) : undefined,
+            shop: item.shop ? {
+              id: item.shop.id,
+              name: item.shop.name
+            } : undefined
+          },
           source,
           added_at: new Date().toISOString(),
         }
@@ -110,14 +143,15 @@ export function Collector() {
             last_active: new Date().toISOString(),
           })
 
-        // Insert feed items (with duplicate prevention)
+        // Insert feed items with full product data (with duplicate prevention)
         for (const event of allEvents) {
           await supabase
             .from('user_feed_items')
             .upsert({
               user_id: userId,
               product_id: event.product_id,
-              shop_id: event.shop_id,
+              product_data: event.product_data, // Store full product data
+              shop_id: event.product_data.shop?.id,
               source: event.source,
               added_at: event.added_at,
             }, {
@@ -125,7 +159,7 @@ export function Collector() {
             })
         }
 
-        console.log('✅ Successfully saved', allEvents.length, 'feed items for user:', userId)
+        console.log('✅ Successfully saved', allEvents.length, 'feed items with full product data for user:', userId)
       } catch (error) {
         console.error('❌ Error saving feed:', error)
       }
