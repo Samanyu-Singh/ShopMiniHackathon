@@ -181,8 +181,7 @@ export function App() {
                 id: sampleProduct.id,
                 title: sampleProduct.title,
                 hasImages: sampleProduct.images?.length > 0,
-                imageUrls: sampleProduct.images?.map((img: any) => img.url),
-                source: sampleProducts?.[randomIndex]?.source
+                imageUrls: sampleProduct.images?.map((img: any) => img.url)
               })
             }
             

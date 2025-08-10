@@ -87,6 +87,24 @@ export function Collector() {
     const saveUserFeed = async () => {
       console.log('💾 Saving user feed for:', userId)
 
+      // Test database connection first
+      try {
+        const { data: testData, error: testError } = await supabase
+          .from('user_profiles')
+          .select('count')
+          .limit(1)
+        
+        if (testError) {
+          console.error('❌ Database connection test failed:', testError)
+          return
+        } else {
+          console.log('✅ Database connection test passed')
+        }
+      } catch (err) {
+        console.error('❌ Database connection exception:', err)
+        return
+      }
+
       // Create product events from all sources with full product data
       const toProductEvent = (
         item: any,
@@ -258,22 +276,48 @@ export function Collector() {
           })
 
         // Insert feed items with full product data (with duplicate prevention)
+        let savedCount = 0
         for (const event of allEvents) {
-          await supabase
-            .from('user_feed_items')
-            .upsert({
-              user_id: userId,
-              product_id: event.product_id,
-              product_data: event.product_data, // Store full product data
-              shop_id: event.product_data.shop?.id,
-              source: event.source,
-              added_at: event.added_at,
-            }, {
-              onConflict: 'user_id,product_id,source'
-            })
+          try {
+            // Try with conflict handling first
+            let { error } = await supabase
+              .from('user_feed_items')
+              .upsert({
+                user_id: userId,
+                product_id: event.product_id,
+                product_data: event.product_data, // Store full product data
+                source: event.source,
+                added_at: event.added_at,
+              }, {
+                onConflict: 'user_id,product_id,source'
+              })
+            
+            // If conflict handling fails, try without it
+            if (error && error.message.includes('conflict')) {
+              console.log('⚠️ Conflict handling failed, trying without it...')
+              const { error: insertError } = await supabase
+                .from('user_feed_items')
+                .insert({
+                  user_id: userId,
+                  product_id: event.product_id,
+                  product_data: event.product_data,
+                  source: event.source,
+                  added_at: event.added_at,
+                })
+              error = insertError
+            }
+            
+            if (error) {
+              console.error('❌ Error saving event:', error, 'Event:', event)
+            } else {
+              savedCount++
+            }
+          } catch (err) {
+            console.error('❌ Exception saving event:', err, 'Event:', event)
+          }
         }
 
-        console.log('✅ Successfully saved', allEvents.length, 'feed items with full product data for user:', userId)
+        console.log('✅ Successfully saved', savedCount, 'out of', allEvents.length, 'feed items for user:', userId)
         console.log('✅ Updated user profile with buyer attributes:', {
           genderAffinity: buyerAttributes?.genderAffinity,
           categoryAffinities: buyerAttributes?.categoryAffinities

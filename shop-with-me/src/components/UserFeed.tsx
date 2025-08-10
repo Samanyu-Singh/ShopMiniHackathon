@@ -28,7 +28,6 @@ type FeedItem = {
   user_id: string
   product_id: string
   product_data: ProductData
-  shop_id?: string
   source: 'recommended_products' | 'recommended_shops' | 'product_lists' | 'followed_shops' | 'saved_products'
   added_at: string
 }
