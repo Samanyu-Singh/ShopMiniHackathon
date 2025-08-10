@@ -1,5 +1,5 @@
 import {useState, useCallback} from 'react'
-import {Button, Card, CardContent, Input, Toaster, Touchable} from '@shopify/shop-minis-react'
+import {Button, Card, CardContent, Input, Toaster, Touchable, useCurrentUser} from '@shopify/shop-minis-react'
 import {X, Share2, MessageCircle} from 'lucide-react'
 import {supabase} from '../lib/supa'
 
@@ -31,6 +31,7 @@ type Props = {
 export function ShareItemModal({product, userId, onClose, onSuccess}: Props) {
   const [shareMessage, setShareMessage] = useState('')
   const [isSharing, setIsSharing] = useState(false)
+  const {currentUser} = useCurrentUser()
 
   // Haptic feedback function
   const triggerHaptic = useCallback(() => {
@@ -53,6 +54,44 @@ export function ShareItemModal({product, userId, onClose, onSuccess}: Props) {
     
     try {
       console.log('👤 User info:', { userId })
+      // Ensure the user's profile has an up-to-date profile picture like Profile page
+      try {
+        const user = currentUser as any
+        let profilePicUrl: string | null = null
+        if (user?.avatarImage?.url) {
+          profilePicUrl = user.avatarImage.url
+        } else if (user?.profileImage?.url) {
+          profilePicUrl = user.profileImage.url
+        } else if (user?.avatar?.url) {
+          profilePicUrl = user.avatar.url
+        } else if (user?.imageUrl) {
+          profilePicUrl = user.imageUrl
+        } else if (user?.image?.url) {
+          profilePicUrl = user.image.url
+        } else if (user?.picture) {
+          profilePicUrl = user.picture
+        } else if (user?.photoURL) {
+          profilePicUrl = user.photoURL
+        } else {
+          profilePicUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.displayName || 'User')}&background=random&color=fff&size=150`
+        }
+
+        const handle = (currentUser?.displayName || 'user')
+          .toLowerCase()
+          .replace(/\s+/g, '_')
+
+        await supabase
+          .from('user_profiles')
+          .upsert({
+            user_id: userId,
+            display_name: currentUser?.displayName || 'User',
+            handle,
+            profile_pic: profilePicUrl,
+            last_active: new Date().toISOString()
+          }, { onConflict: 'user_id' })
+      } catch (e) {
+        console.warn('⚠️ Failed to upsert user profile before sharing:', e)
+      }
       
       // Check if user already shared this product
       const {data: existingShares, error: checkError} = await supabase
@@ -184,7 +223,7 @@ export function ShareItemModal({product, userId, onClose, onSuccess}: Props) {
             placeholder="Why should others vote on this item? (optional)"
             value={shareMessage}
             onChange={(e) => setShareMessage(e.target.value)}
-            className="w-full text-black placeholder-gray-500"
+            className="w-full"
             maxLength={200}
           />
           <p className="text-xs text-gray-500 mt-1">

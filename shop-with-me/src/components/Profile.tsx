@@ -135,19 +135,18 @@ export function Profile({onBack, onViewSaved, isDarkMode}: Props) {
 
     try {
       const {data, error} = await supabase
-        .from('friendships')
+        .from('followers')
         .select(`
-          user_id,
-          created_at,
-          user_profiles!friendships_user_id_fkey (
+          follower_id,
+          followed_at,
+          user_profiles!followers_follower_id_fkey (
             display_name,
             handle,
             profile_pic
           )
         `)
-        .eq('friend_id', userId)
-        .eq('status', 'accepted')
-        .order('created_at', {ascending: false})
+        .eq('following_id', userId)
+        .order('followed_at', {ascending: false})
 
       if (error) {
         console.error('Error loading followers:', error)
@@ -155,11 +154,11 @@ export function Profile({onBack, onViewSaved, isDarkMode}: Props) {
       }
 
       const followersData = (data || []).map(item => ({
-        id: item.user_id,
+        id: item.follower_id,
         display_name: item.user_profiles?.display_name || 'Unknown',
         handle: item.user_profiles?.handle || 'unknown',
         profile_pic: item.user_profiles?.profile_pic,
-        followed_at: item.created_at
+        followed_at: item.followed_at
       }))
 
       console.log('👤 Profile - Followers data:', followersData)
@@ -179,19 +178,18 @@ export function Profile({onBack, onViewSaved, isDarkMode}: Props) {
 
     try {
       const {data, error} = await supabase
-        .from('friendships')
+        .from('followers')
         .select(`
-          friend_id,
-          created_at,
-          user_profiles!friendships_friend_id_fkey (
+          following_id,
+          followed_at,
+          user_profiles!followers_following_id_fkey (
             display_name,
             handle,
             profile_pic
           )
         `)
-        .eq('user_id', userId)
-        .eq('status', 'accepted')
-        .order('created_at', {ascending: false})
+        .eq('follower_id', userId)
+        .order('followed_at', {ascending: false})
 
       if (error) {
         console.error('Error loading following:', error)
@@ -199,11 +197,11 @@ export function Profile({onBack, onViewSaved, isDarkMode}: Props) {
       }
 
       const followingData = (data || []).map(item => ({
-        id: item.friend_id,
+        id: item.following_id,
         display_name: item.user_profiles?.display_name || 'Unknown',
         handle: item.user_profiles?.handle || 'unknown',
         profile_pic: item.user_profiles?.profile_pic,
-        followed_at: item.created_at
+        followed_at: item.followed_at
       }))
 
       console.log('👤 Profile - Following data:', followingData)
@@ -287,16 +285,14 @@ export function Profile({onBack, onViewSaved, isDarkMode}: Props) {
               Manage your profile and view your stats
             </p>
           </div>
-          <div className="flex gap-3">
-            <Button 
-              onClick={onBack} 
-              variant="secondary" 
-              size="sm"
-              className={`${isDarkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-700 text-white' : 'bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white hover:shadow-lg text-black'} transition-all duration-300`}
-            >
-              ← Back
-            </Button>
-          </div>
+          <Button 
+            onClick={onBack} 
+            variant="secondary" 
+            size="sm"
+            className={`${isDarkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-700 text-white' : 'bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white hover:shadow-lg text-black'} transition-all duration-300`}
+          >
+            ← Back
+          </Button>
         </div>
       </div>
 
@@ -516,11 +512,14 @@ function FollowersModal({followers, isDarkMode, onClose, onViewProfile}: Followe
                 <div className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 ${
                   isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'
                 }`}>
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage 
-                      src={follower.profile_pic || `https://ui-avatars.com/api/?name=${encodeURIComponent(follower.display_name)}&background=random&color=fff&size=150`} 
-                      alt={follower.display_name} 
-                    />
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage 
+                        src={(follower.profile_pic && follower.profile_pic !== 'null' && follower.profile_pic !== 'undefined')
+                          ? follower.profile_pic
+                          : `https://ui-avatars.com/api/?name=${encodeURIComponent(follower.display_name)}&background=random&color=fff&size=150`}
+                        alt={follower.display_name}
+                        referrerPolicy="no-referrer"
+                      />
                     <AvatarFallback className="text-sm font-bold">
                       {follower.display_name.charAt(0).toUpperCase()}
                     </AvatarFallback>
@@ -594,11 +593,14 @@ function FollowingModal({following, isDarkMode, onClose, onViewProfile}: Followi
                 <div className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 ${
                   isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'
                 }`}>
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage 
-                      src={followed.profile_pic || `https://ui-avatars.com/api/?name=${encodeURIComponent(followed.display_name)}&background=random&color=fff&size=150`} 
-                      alt={followed.display_name} 
-                    />
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage 
+                        src={(followed.profile_pic && followed.profile_pic !== 'null' && followed.profile_pic !== 'undefined')
+                          ? followed.profile_pic
+                          : `https://ui-avatars.com/api/?name=${encodeURIComponent(followed.display_name)}&background=random&color=fff&size=150`}
+                        alt={followed.display_name}
+                        referrerPolicy="no-referrer"
+                      />
                     <AvatarFallback className="text-sm font-bold">
                       {followed.display_name.charAt(0).toUpperCase()}
                     </AvatarFallback>

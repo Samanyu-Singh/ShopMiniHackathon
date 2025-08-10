@@ -1,12 +1,11 @@
 import {useState, useCallback, useEffect, useMemo} from 'react'
-import {Button, Touchable, useCurrentUser} from '@shopify/shop-minis-react'
+import {Button, Touchable, ProductCard, useCurrentUser, useRecommendedProducts, useSavedProducts} from '@shopify/shop-minis-react'
 import {Collector} from './components/Collector'
 import {UserFeed} from './components/UserFeed'
 import {FriendsFeed} from './components/FriendsFeed'
 import {SharedItemsFeed} from './components/SharedItemsFeed'
 import {Friends} from './components/Friends'
 import {Profile} from './components/Profile'
-import {Stories} from './components/Stories'
 import {ThemeToggle} from './components/ThemeToggle'
 import {supabase} from './lib/supa'
 
@@ -63,6 +62,12 @@ export function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showSearchModal, setShowSearchModal] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(true) // Default to dark mode like Linear
+  const [dbResults, setDbResults] = useState<any[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  
+  // Product sources for search (keep UI the same; just make it functional)
+  const recommendedProducts = useRecommendedProducts({first: 50})
+  const savedProducts = useSavedProducts({first: 50})
 
   // Debug view changes
   useEffect(() => {
@@ -163,13 +168,112 @@ export function App() {
     }
   }, [userProfiles, triggerHaptic])
 
-  const handleSearchSubmit = useCallback((query: string) => {
+  const handleSearchSubmit = useCallback(async (query: string) => {
     triggerHaptic()
-    console.log('🔍 Searching for:', query)
-    // Here you would integrate with Shopify's search API
-    setSearchQuery(query)
-    setShowSearchModal(false)
+    const q = (query || '').trim()
+    console.log('🔍 Searching for:', q)
+    setSearchQuery(q)
+    if (!q) {
+      setDbResults([])
+      return
+    }
+    try {
+      setIsSearching(true)
+      // Fetch broad sets, then filter client-side to reliably include other users' recommended items
+      const [ufiRes, sharedRes] = await Promise.all([
+        supabase
+          .from('user_feed_items')
+          .select('product_id, product_data, created_at, is_active, activity_type')
+          .eq('is_active', true)
+          .eq('activity_type', 'recommended')
+          .order('created_at', {ascending: false})
+          .limit(500),
+        supabase
+          .from('shared_items')
+          .select('product_id, product_data, created_at, is_active')
+          .eq('is_active', true)
+          .order('created_at', {ascending: false})
+          .limit(500)
+      ])
+
+      const rows = ([...(ufiRes.data || []), ...(sharedRes.data || [])] as any[])
+        .filter(r => r && r.product_data)
+
+      // Convert to products and filter by query and price
+      const ql = q.toLowerCase()
+      const cleaned = rows
+        .map(r => r.product_data)
+        .filter(p => {
+          const amount = p?.price?.amount
+          const n = amount != null ? parseFloat(String(amount)) : NaN
+          if (!(Number.isFinite(n) && n > 0)) return false
+          const title = (p?.title || '').toLowerCase()
+          const shopName = (p?.shop?.name || '').toLowerCase()
+          const desc = (p?.description || '').toLowerCase()
+          return title.includes(ql) || shopName.includes(ql) || desc.includes(ql)
+        })
+
+      setDbResults(cleaned)
+    } catch (err) {
+      console.error('❌ Search error:', err)
+      setDbResults([])
+    } finally {
+      setIsSearching(false)
+    }
   }, [triggerHaptic])
+
+  // Compute filtered products from recommended + saved
+  const filteredProducts = useMemo(() => {
+    const q = (searchQuery || '').trim().toLowerCase()
+    if (!q) return [] as any[]
+    // Include saved products from SDK to complement DB results
+    const saved = (savedProducts.products ?? []) as any[]
+    return saved.filter(p => {
+      const title = (p?.title || '').toLowerCase()
+      const shopName = (p?.shop?.name || '').toLowerCase()
+      const desc = (p?.description || '').toLowerCase()
+      return title.includes(q) || shopName.includes(q) || desc.includes(q)
+    })
+    // Note: we exclude $0.00 saved products visually
+    .filter(p => {
+      const amount = p?.price?.amount
+      const n = amount != null ? parseFloat(String(amount)) : NaN
+      return Number.isFinite(n) && n > 0
+    })
+  }, [searchQuery, savedProducts.products])
+
+  // Merge DB results with saved + recommended hook results and dedupe by id
+  const mergedResults = useMemo(() => {
+    const map = new Map<string, any>()
+    const add = (arr: any[]) => {
+      for (const p of arr) {
+        const id = p?.id
+        if (!id) continue
+        if (!map.has(id)) map.set(id, p)
+      }
+    }
+    add(dbResults)
+    add(filteredProducts)
+    // Add recommended products that match query and have price > 0
+    const q = (searchQuery || '').trim().toLowerCase()
+    if (q) {
+      const rec = (recommendedProducts.products ?? []) as any[]
+      const recFiltered = rec
+        .filter(p => {
+          const title = (p?.title || '').toLowerCase()
+          const shopName = (p?.shop?.name || '').toLowerCase()
+          const desc = (p?.description || '').toLowerCase()
+          return title.includes(q) || shopName.includes(q) || desc.includes(q)
+        })
+        .filter(p => {
+          const amount = p?.price?.amount
+          const n = amount != null ? parseFloat(String(amount)) : NaN
+          return Number.isFinite(n) && n > 0
+        })
+      add(recFiltered)
+    }
+    return Array.from(map.values())
+  }, [dbResults, filteredProducts, recommendedProducts.products, searchQuery])
 
   const toggleDarkMode = useCallback(() => {
     triggerHaptic()
@@ -289,7 +393,6 @@ export function App() {
               handle={feedView.handle}
               onBack={handleBack}
               isDarkMode={isDarkMode}
-              currentUserId={currentUserId}
             />
           </div>
         </div>
@@ -342,7 +445,17 @@ export function App() {
   if (view === 'stories') {
     return (
       <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-purple-100 text-gray-900'}`}>
-        <Stories onBack={handleBack} />
+        <div className="pt-12 px-4 pb-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Button onClick={handleBack} variant="secondary">← Back</Button>
+            <h1 className="text-xl font-bold">Stories</h1>
+          </div>
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">📱</div>
+            <h2 className="text-2xl font-bold mb-2">Stories Coming Soon</h2>
+            <p className="text-gray-600">Share your shopping moments with friends</p>
+          </div>
+        </div>
       </div>
     )
   }
@@ -494,7 +607,7 @@ export function App() {
                 Search Products
               </h2>
             </div>
-            <div className="space-y-6">
+              <div className="space-y-6">
               <div className="relative">
                 <input
                   type="text"
@@ -519,6 +632,20 @@ export function App() {
                   🔍
                 </div>
               </div>
+                {searchQuery && (
+                  <div>
+                    <div className="grid grid-cols-2 gap-4 max-h-[50vh] overflow-y-auto pr-1">
+                      {mergedResults.map((product: any) => (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          onFavoriteToggled={() => {}}
+                          onClick={() => {}}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               <div className="flex gap-4">
                 <Button 
                   onClick={() => handleSearchSubmit(searchQuery)}

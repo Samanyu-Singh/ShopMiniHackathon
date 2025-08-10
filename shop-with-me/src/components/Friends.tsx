@@ -67,41 +67,50 @@ export function Friends({onBack, currentUserId, isDarkMode}: Props) {
     }
   }, [])
 
-  // Load followers (people who are friends with current user)
+  // Load followers (two-step fetch to reliably get profiles with photos)
   const loadFollowers = useCallback(async () => {
     try {
       console.log('🔍 Loading followers for:', currentUserId)
-      
-      const {data, error} = await supabase
-        .from('friendships')
-        .select(`
-          user_id,
-          created_at,
-          user_profiles!friendships_user_id_fkey (
-            display_name,
-            handle,
-            profile_pic
-          )
-        `)
-        .eq('friend_id', currentUserId)
-        .eq('status', 'accepted')
-        .order('created_at', {ascending: false})
-      
-      console.log('🔍 Followers raw data:', data)
-      
-      if (error) {
-        console.error('Error loading followers:', error)
+      const {data: followerRows, error: followersError} = await supabase
+        .from('followers')
+        .select('follower_id, followed_at')
+        .eq('following_id', currentUserId)
+        .order('followed_at', {ascending: false})
+
+      if (followersError) {
+        console.error('Error loading followers:', followersError)
         setFollowers([])
         return
       }
 
-      const followersData = (data || []).map(item => ({
-        follower_id: item.user_id,
-        follower_display_name: item.user_profiles?.display_name || 'Unknown',
-        follower_handle: item.user_profiles?.handle || 'unknown',
-        follower_profile_pic: item.user_profiles?.profile_pic,
-        followed_at: item.created_at
-      }))
+      const followerIds = (followerRows || []).map(r => r.follower_id)
+      if (followerIds.length === 0) {
+        setFollowers([])
+        return
+      }
+
+      const {data: profiles, error: profilesError} = await supabase
+        .from('user_profiles')
+        .select('user_id, display_name, handle, profile_pic')
+        .in('user_id', followerIds)
+
+      if (profilesError) {
+        console.error('Error loading follower profiles:', profilesError)
+        setFollowers([])
+        return
+      }
+
+      const profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
+      const followersData = (followerRows || []).map(row => {
+        const p = profileMap.get(row.follower_id) as any
+        return {
+          follower_id: row.follower_id,
+          follower_display_name: p?.display_name || 'Unknown',
+          follower_handle: p?.handle || 'unknown',
+          follower_profile_pic: p?.profile_pic,
+          followed_at: row.followed_at
+        }
+      })
 
       console.log('🔍 Processed followers data:', followersData)
       setFollowers(followersData)
@@ -111,41 +120,50 @@ export function Friends({onBack, currentUserId, isDarkMode}: Props) {
     }
   }, [currentUserId])
 
-  // Load following (people the current user is friends with)
+  // Load following (two-step fetch)
   const loadFollowing = useCallback(async () => {
     try {
       console.log('🔍 Loading following for:', currentUserId)
-      
-      const {data, error} = await supabase
-        .from('friendships')
-        .select(`
-          friend_id,
-          created_at,
-          user_profiles!friendships_friend_id_fkey (
-            display_name,
-            handle,
-            profile_pic
-          )
-        `)
-        .eq('user_id', currentUserId)
-        .eq('status', 'accepted')
-        .order('created_at', {ascending: false})
-      
-      console.log('🔍 Following raw data:', data)
-      
-      if (error) {
-        console.error('Error loading following:', error)
+      const {data: followingRows, error: followingError} = await supabase
+        .from('followers')
+        .select('following_id, followed_at')
+        .eq('follower_id', currentUserId)
+        .order('followed_at', {ascending: false})
+
+      if (followingError) {
+        console.error('Error loading following:', followingError)
         setFollowing([])
         return
       }
 
-      const followingData = (data || []).map(item => ({
-        following_id: item.friend_id,
-        following_display_name: item.user_profiles?.display_name || 'Unknown',
-        following_handle: item.user_profiles?.handle || 'unknown',
-        following_profile_pic: item.user_profiles?.profile_pic,
-        followed_at: item.created_at
-      }))
+      const followingIds = (followingRows || []).map(r => r.following_id)
+      if (followingIds.length === 0) {
+        setFollowing([])
+        return
+      }
+
+      const {data: profiles, error: profilesError} = await supabase
+        .from('user_profiles')
+        .select('user_id, display_name, handle, profile_pic')
+        .in('user_id', followingIds)
+
+      if (profilesError) {
+        console.error('Error loading following profiles:', profilesError)
+        setFollowing([])
+        return
+      }
+
+      const profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
+      const followingData = (followingRows || []).map(row => {
+        const p = profileMap.get(row.following_id) as any
+        return {
+          following_id: row.following_id,
+          following_display_name: p?.display_name || 'Unknown',
+          following_handle: p?.handle || 'unknown',
+          following_profile_pic: p?.profile_pic,
+          followed_at: row.followed_at
+        }
+      })
 
       console.log('🔍 Processed following data:', followingData)
       setFollowing(followingData)
@@ -221,18 +239,17 @@ export function Friends({onBack, currentUserId, isDarkMode}: Props) {
         return
       }
 
-      // Get current user's following list (friendships where user_id = currentUserId)
+      // Get current user's following list
       const {data: userFollowing, error: followingError} = await supabase
-        .from('friendships')
-        .select('friend_id')
-        .eq('user_id', currentUserId)
-        .eq('status', 'accepted')
+        .from('followers')
+        .select('following_id')
+        .eq('follower_id', currentUserId)
       
       console.log('🔍 User following list:', userFollowing)
       
       // Get current user's pending follow requests
       const {data: userRequests, error: requestsError} = await supabase
-        .from('friend_requests')
+        .from('follow_requests')
         .select('recipient_id')
         .eq('requester_id', currentUserId)
         .eq('status', 'pending')
@@ -241,14 +258,14 @@ export function Friends({onBack, currentUserId, isDarkMode}: Props) {
       
       if (followingError) {
         console.error('Error loading user following:', followingError)
-        // If friendships table doesn't exist, just show all users
-        console.log('🔍 Showing all users since friendships table error')
+        // If followers table doesn't exist, just show all users
+        console.log('🔍 Showing all users since followers table error')
         setDiscoverUsers(allUsers || [])
         return
       }
 
       // Filter out users who are already being followed or have pending requests
-      const followingIds = new Set((userFollowing || []).map(f => f.friend_id))
+      const followingIds = new Set((userFollowing || []).map(f => f.following_id))
       const requestIds = new Set((userRequests || []).map(r => r.recipient_id))
       const discoverUsers = (allUsers || []).filter(user => 
         !followingIds.has(user.user_id) && !requestIds.has(user.user_id)
@@ -298,7 +315,7 @@ export function Friends({onBack, currentUserId, isDarkMode}: Props) {
       setPendingFollows(prev => ({...prev, [userIdToFollow]: true}))
 
       const {error} = await supabase
-        .from('friend_requests')
+        .from('follow_requests')
         .insert({
           requester_id: currentUserId,
           recipient_id: userIdToFollow,
@@ -329,21 +346,14 @@ export function Friends({onBack, currentUserId, isDarkMode}: Props) {
     try {
       triggerHaptic()
       
-      // Delete both sides of the friendship
-      const {error: error1} = await supabase
-        .from('friendships')
+      const {error} = await supabase
+        .from('followers')
         .delete()
-        .eq('user_id', currentUserId)
-        .eq('friend_id', userIdToUnfollow)
+        .eq('follower_id', currentUserId)
+        .eq('following_id', userIdToUnfollow)
 
-      const {error: error2} = await supabase
-        .from('friendships')
-        .delete()
-        .eq('user_id', userIdToUnfollow)
-        .eq('friend_id', currentUserId)
-
-      if (error1 || error2) {
-        console.error('Error unfollowing user:', error1 || error2)
+      if (error) {
+        console.error('Error unfollowing user:', error)
         return
       }
 
@@ -364,7 +374,7 @@ export function Friends({onBack, currentUserId, isDarkMode}: Props) {
       
       // Update request status to accepted
       const {error: updateError} = await supabase
-        .from('friend_requests')
+        .from('follow_requests')
         .update({status: 'accepted'})
         .eq('id', requestId)
 
@@ -373,29 +383,17 @@ export function Friends({onBack, currentUserId, isDarkMode}: Props) {
         return
       }
 
-      // Create the friendship relationship in both directions
-      const {error: followError1} = await supabase
-        .from('friendships')
+      // Create the follow relationship
+      const {error: followError} = await supabase
+        .from('followers')
         .insert({
-          user_id: requesterId,
-          friend_id: currentUserId,
-          status: 'accepted',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          follower_id: requesterId,
+          following_id: currentUserId,
+          followed_at: new Date().toISOString()
         })
 
-      const {error: followError2} = await supabase
-        .from('friendships')
-        .insert({
-          user_id: currentUserId,
-          friend_id: requesterId,
-          status: 'accepted',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-
-      if (followError1 || followError2) {
-        console.error('Error creating friendship relationship:', followError1 || followError2)
+      if (followError) {
+        console.error('Error creating follow relationship:', followError)
         return
       }
 
@@ -416,7 +414,7 @@ export function Friends({onBack, currentUserId, isDarkMode}: Props) {
       triggerHaptic()
       
       const {error} = await supabase
-        .from('friend_requests')
+        .from('follow_requests')
         .update({status: 'declined'})
         .eq('id', requestId)
 
@@ -474,6 +472,14 @@ export function Friends({onBack, currentUserId, isDarkMode}: Props) {
     if (diffInHours < 24) return `${Math.floor(diffInHours)}h ago`
     if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`
     return `${Math.floor(diffInHours / 168)}w ago`
+  }
+
+  const sanitizeProfilePic = (rawUrl?: string, displayName?: string) => {
+    const url = (rawUrl || '').trim()
+    if (!url || url.toLowerCase() === 'null' || url.toLowerCase() === 'undefined') {
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName || 'User')}&background=random&color=fff&size=150`
+    }
+    return url
   }
 
   return (
@@ -680,8 +686,9 @@ export function Friends({onBack, currentUserId, isDarkMode}: Props) {
                         }}>
                           <Avatar className="w-10 h-10">
                             <AvatarImage 
-                              src={follower.follower_profile_pic || `https://ui-avatars.com/api/?name=${encodeURIComponent(follower.follower_display_name)}&background=random&color=fff&size=150`} 
-                              alt={follower.follower_display_name} 
+                              src={sanitizeProfilePic(follower.follower_profile_pic, follower.follower_display_name)} 
+                              alt={follower.follower_display_name}
+                              referrerPolicy="no-referrer"
                             />
                             <AvatarFallback className="text-sm font-bold">
                               {follower.follower_display_name.charAt(0).toUpperCase()}
@@ -820,8 +827,9 @@ export function Friends({onBack, currentUserId, isDarkMode}: Props) {
                       }}>
                         <Avatar className="w-10 h-10">
                           <AvatarImage 
-                            src={followed.following_profile_pic || `https://ui-avatars.com/api/?name=${encodeURIComponent(followed.following_display_name)}&background=random&color=fff&size=150`} 
-                            alt={followed.following_display_name} 
+                            src={sanitizeProfilePic(followed.following_profile_pic, followed.following_display_name)} 
+                            alt={followed.following_display_name}
+                            referrerPolicy="no-referrer"
                           />
                           <AvatarFallback className="text-sm font-bold">
                             {followed.following_display_name.charAt(0).toUpperCase()}
@@ -874,8 +882,9 @@ export function Friends({onBack, currentUserId, isDarkMode}: Props) {
                       }}>
                         <Avatar className="w-10 h-10">
                           <AvatarImage 
-                            src={user.profile_pic || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.display_name)}&background=random&color=fff&size=150`} 
-                            alt={user.display_name} 
+                            src={sanitizeProfilePic(user.profile_pic, user.display_name)} 
+                            alt={user.display_name}
+                            referrerPolicy="no-referrer"
                           />
                           <AvatarFallback className="text-sm font-bold">
                             {user.display_name.charAt(0).toUpperCase()}
@@ -973,12 +982,11 @@ function AddFriendModal({currentUserId, isDarkMode, onClose, onSuccess}: AddFrie
 
       // Filter out users who are already being followed
       const {data: userFollowing} = await supabase
-        .from('friendships')
-        .select('friend_id')
-        .eq('user_id', currentUserId)
-        .eq('status', 'accepted')
+        .from('followers')
+        .select('following_id')
+        .eq('follower_id', currentUserId)
       
-      const followingIds = new Set((userFollowing || []).map(f => f.friend_id))
+      const followingIds = new Set((userFollowing || []).map(f => f.following_id))
       const filteredResults = (data || []).filter(user => !followingIds.has(user.user_id))
       
       setSearchResults(filteredResults)
@@ -995,29 +1003,16 @@ function AddFriendModal({currentUserId, isDarkMode, onClose, onSuccess}: AddFrie
       
       setPendingRequests(prev => ({...prev, [userIdToFollow]: true}))
 
-      // Create friendship in both directions
-      const {error: error1} = await supabase
-        .from('friendships')
+      const {error} = await supabase
+        .from('followers')
         .insert({
-          user_id: currentUserId,
-          friend_id: userIdToFollow,
-          status: 'accepted',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          follower_id: currentUserId,
+          following_id: userIdToFollow,
+          followed_at: new Date().toISOString()
         })
 
-      const {error: error2} = await supabase
-        .from('friendships')
-        .insert({
-          user_id: userIdToFollow,
-          friend_id: currentUserId,
-          status: 'accepted',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-
-      if (error1 || error2) {
-        console.error('Error following user:', error1 || error2)
+      if (error) {
+        console.error('Error following user:', error)
         setPendingRequests(prev => ({...prev, [userIdToFollow]: false}))
         return
       }

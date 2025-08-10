@@ -1,5 +1,5 @@
 import {useState, useCallback, useEffect, useMemo} from 'react'
-import {Button, Avatar, AvatarImage, AvatarFallback, Touchable, Card, CardContent, Toaster} from '@shopify/shop-minis-react'
+import {Button, Avatar, AvatarImage, AvatarFallback, Touchable, Card, CardContent, Toaster, useCurrentUser} from '@shopify/shop-minis-react'
 import {Heart, ThumbsDown, Share2, TrendingUp, Clock, Trash2} from 'lucide-react'
 import {ThemeToggle} from './ThemeToggle'
 import {supabase} from '../lib/supa'
@@ -48,6 +48,7 @@ type Props = {
 }
 
 export function SharedItemsFeed({onBack, onShareItem, currentUserId, isDarkMode, onToggleDarkMode}: Props) {
+  const {currentUser} = useCurrentUser()
   console.log('🎯 SharedItemsFeed component rendered!')
   console.log('Props:', { onBack, onShareItem, currentUserId })
   
@@ -122,10 +123,9 @@ export function SharedItemsFeed({onBack, onShareItem, currentUserId, isDarkMode,
 
         // First, get the list of users that the current user is following
         const {data: followingData, error: followingError} = await supabase
-          .from('friendships')
-          .select('friend_id')
-          .eq('user_id', currentUserId)
-          .eq('status', 'accepted')
+          .from('followers')
+          .select('following_id')
+          .eq('follower_id', currentUserId)
         
         if (followingError) {
           console.error('❌ Error loading following list:', followingError)
@@ -133,12 +133,12 @@ export function SharedItemsFeed({onBack, onShareItem, currentUserId, isDarkMode,
           return
         }
 
-        const friendIds = followingData?.map(f => f.friend_id) || []
-        const allowedUserIds = [currentUserId, ...friendIds]
+        const followingIds = followingData?.map(f => f.following_id) || []
+        const allowedUserIds = [currentUserId, ...followingIds]
         
-        console.log('🔍 Allowed user IDs (current user + friends):', allowedUserIds)
+        console.log('🔍 Allowed user IDs (current user + following):', allowedUserIds)
 
-        // Load shared items only from current user and friends
+        // Load shared items only from current user and followed users
         const {data: items, error: itemsError} = await supabase
           .from('shared_items')
           .select(`
@@ -548,8 +548,25 @@ export function SharedItemsFeed({onBack, onShareItem, currentUserId, isDarkMode,
                   <div className="flex items-center mb-4">
                     <Avatar className="w-12 h-12 ring-2 ring-white/50 shadow-lg mr-3">
                       <AvatarImage 
-                        src={item.user_profile?.profile_pic || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.user_profile?.display_name || 'User')}&background=random&color=fff&size=150`} 
+                        src={(() => {
+                          // If this is the current user's post, resolve from live currentUser (like Profile)
+                          if (item.user_id === currentUserId) {
+                            const user: any = currentUser
+                            const livePic = user?.avatarImage?.url
+                              || user?.profileImage?.url
+                              || user?.avatar?.url
+                              || user?.imageUrl
+                              || user?.image?.url
+                              || user?.picture
+                              || user?.photoURL
+                            if (livePic) return livePic
+                          }
+                          // Otherwise use stored profile_pic or fallback initials avatar
+                          return item.user_profile?.profile_pic 
+                            || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.user_profile?.display_name || 'User')}&background=random&color=fff&size=150`
+                        })()} 
                         alt={item.user_profile?.display_name || 'User'} 
+                        referrerPolicy="no-referrer"
                       />
                       <AvatarFallback className="text-sm font-bold">
                         {(item.user_profile?.display_name || 'U').charAt(0).toUpperCase()}
@@ -577,22 +594,19 @@ export function SharedItemsFeed({onBack, onShareItem, currentUserId, isDarkMode,
 
                   {/* Product Image */}
                   <div className="w-full mb-4">
-                    {item.product_data.images?.[0] ? (
-                      <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl overflow-hidden shadow-lg">
-                        <img 
-                          src={item.product_data.images[0].url} 
-                          alt={item.product_data.title || 'Product'}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl overflow-hidden flex items-center justify-center shadow-lg">
-                        <div className="text-center p-4">
-                          <div className="text-sm text-gray-700 font-semibold mb-2">{item.product_data.title}</div>
-                          <div className="text-xs text-gray-500 bg-white/80 px-3 py-1 rounded-full">No image available</div>
+                    {(() => {
+                      const resolvedUrl = item.product_data.images?.[0]?.url ||
+                        `https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=800&fit=crop&auto=format&random=${item.product_id || item.id}`
+                      return (
+                        <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl overflow-hidden shadow-lg">
+                          <img
+                            src={resolvedUrl}
+                            alt={item.product_data.title || 'Product'}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
-                      </div>
-                    )}
+                      )
+                    })()}
                   </div>
 
                   {/* Product Info */}

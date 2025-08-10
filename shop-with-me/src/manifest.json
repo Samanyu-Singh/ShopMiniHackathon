@@ -1,7 +1,13 @@
 {
   "name": "Shop-With-Me",
   "permissions": [],
-  "trusted_domains": ["https://aedyzminlpeiyhhyuefc.supabase.co"],
+  "trusted_domains": [
+    "https://aedyzminlpeiyhhyuefc.supabase.co",
+    "https://cdn.shopify.com",
+    "https://shop.app",
+    "https://images.unsplash.com",
+    "https://ui-avatars.com"
+  ],
   "privacy_policy_url": "https://example.com/privacy",
   "terms_url": "https://example.com/terms"
 }
