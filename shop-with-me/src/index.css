@@ -1,1 +1,19 @@
 @import "@shopify/shop-minis-react/styles";
+
+/* Custom styles for stories */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Mobile optimization */
+@media (max-width: 640px) {
+  .stories-container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}

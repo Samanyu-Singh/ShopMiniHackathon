@@ -29,7 +29,7 @@ type FeedItem = {
   product_id: string
   product_data: ProductData
   shop_id?: string
-  source: 'recommended_products' | 'recommended_shops' | 'product_lists'
+  source: 'recommended_products' | 'recommended_shops' | 'product_lists' | 'followed_shops' | 'saved_products'
   added_at: string
 }
 
@@ -37,6 +37,9 @@ type UserProfile = {
   user_id: string
   handle: string
   display_name: string
+  profile_pic?: string
+  gender_affinity?: string
+  category_affinities?: string[]
   created_at: string
   last_active: string
 }
@@ -88,6 +91,18 @@ export function UserFeed({userId, handle, onBack}: Props) {
         }
         
         console.log('📊 Loaded feed items with product data:', items)
+        
+        // Debug: Check first few items
+        if (items && items.length > 0) {
+          console.log('🔍 First 3 feed items:', items.slice(0, 3).map(item => ({
+            id: item.id,
+            product_id: item.product_id,
+            product_data: item.product_data,
+            has_product_data: !!item.product_data,
+            product_data_id: item.product_data?.id
+          })))
+        }
+        
         setFeedItems(items as FeedItem[])
         setLoading(false)
       } catch (err) {
@@ -100,20 +115,20 @@ export function UserFeed({userId, handle, onBack}: Props) {
   }, [userId])
 
   const handleFavoriteToggled = (isFavorited: boolean) => {
-    console.log('Favorite toggled:', isFavorited)
+    console.log('Favorite toggled, isFavorited:', isFavorited)
   }
 
   if (loading) {
     return (
-      <div className="text-center">
-        <p>Loading {handle}'s feed...</p>
+      <div className="text-center py-8">
+        <p>Loading {handle}'s curated products...</p>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="text-center text-red-600">
+      <div className="text-center text-red-600 py-8">
         <p>Error: {error}</p>
         <Button onClick={onBack} className="mt-2">Back</Button>
       </div>
@@ -122,7 +137,7 @@ export function UserFeed({userId, handle, onBack}: Props) {
 
   if (!userProfile) {
     return (
-      <div className="text-center">
+      <div className="text-center py-8">
         <p>User not found.</p>
         <Button onClick={onBack} className="mt-2">Back</Button>
       </div>
@@ -131,45 +146,99 @@ export function UserFeed({userId, handle, onBack}: Props) {
 
   if (!feedItems || feedItems.length === 0) {
     return (
-      <div className="text-center">
-        <p>{userProfile.display_name || userProfile.handle} hasn't discovered any products yet.</p>
+      <div className="text-center py-8">
+        <p>{userProfile.display_name || userProfile.handle} hasn't curated any products yet.</p>
         <Button onClick={onBack} className="mt-2">Back</Button>
       </div>
     )
   }
 
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-4">
+    <div className="pt-12 px-4 pb-6">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
         <Button onClick={onBack} variant="secondary">← Back</Button>
-        <h2 className="text-lg font-semibold">{userProfile.display_name || userProfile.handle}'s Discoveries</h2>
+        <div>
+          <h1 className="text-xl font-bold">{userProfile.display_name || userProfile.handle}'s Curated Products</h1>
+                            <p className="text-sm text-gray-600">
+                    {feedItems.length} products
+                  </p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
+      {/* Product Grid */}
+      <div className="grid grid-cols-2 gap-4">
         {feedItems.map((item) => {
-          // Use real product data from database
           const product = item.product_data
           
-          if (!product) {
+          if (!product || !product.id) {
+            console.log('❌ Invalid product data:', product)
             return (
-              <div key={item.id} className="p-3 border rounded-lg">
-                <div className="text-sm text-gray-600">Product data missing: {item.product_id}</div>
+              <div key={item.id} className="p-3 border rounded-lg bg-gray-50">
+                <div className="text-sm text-gray-600">Product data missing or invalid</div>
                 <div className="text-xs text-gray-500">Source: {item.source.replace('_', ' ')}</div>
               </div>
             )
           }
 
-          return (
-            <div key={item.id} className="relative">
-              <ProductCard 
-                product={product as any} 
-                onFavoriteToggled={handleFavoriteToggled}
-              />
-              <div className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
-                {item.source.replace('_', ' ')}
-              </div>
-            </div>
-          )
+          // Ensure product has required fields for ProductCard
+          const productForCard = {
+            id: product.id || `product-${item.id}`,
+            title: product.title || 'Untitled Product',
+            description: product.description || '',
+            price: product.price || { amount: '0.00', currencyCode: 'USD' },
+            // Ensure images have the correct structure for ProductCard
+            images: (product.images || []).length > 0 
+              ? (product.images || []).map(img => ({
+                  url: img.url,
+                  altText: img.altText || product.title || 'Product Image'
+                }))
+              : [{
+                  // Use a consistent product-like image
+                  url: `https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop&random=${product.id}`,
+                  altText: product.title || 'Product Image'
+                }],
+            shop: { 
+              id: product.shop?.id || 'shop-1', 
+              name: product.shop?.name || 'Unknown Shop' 
+            },
+            reviewAnalytics: product.reviewAnalytics || {},
+            defaultVariantId: product.defaultVariantId || product.id || `product-${item.id}`,
+            isFavorited: false,
+            // Add any missing required fields that ProductCard might expect
+            featuredImage: (product.images || []).length > 0 
+              ? {
+                  url: (product.images || [])[0].url,
+                  altText: (product.images || [])[0].altText || product.title || 'Product Image'
+                }
+              : {
+                  url: `https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop&random=${product.id}`,
+                  altText: product.title || 'Product Image'
+                }
+          }
+
+          console.log('🔍 Rendering product:', {
+            id: productForCard.id,
+            title: productForCard.title,
+            hasImages: productForCard.images?.length > 0,
+            imageUrls: productForCard.images?.map(img => img.url),
+            price: productForCard.price,
+            featuredImage: productForCard.featuredImage,
+            fullProduct: productForCard
+          })
+
+                            return (
+                    <div key={item.id} className="relative">
+                      <ProductCard
+                        product={productForCard as any}
+                        onFavoriteToggled={handleFavoriteToggled}
+                      />
+                      {/* Source badge */}
+                      <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded opacity-75">
+                        {item.source.replace('_', ' ')}
+                      </div>
+                    </div>
+                  )
         })}
       </div>
     </div>
