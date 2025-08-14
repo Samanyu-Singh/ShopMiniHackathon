@@ -1,5 +1,17 @@
 @import "@shopify/shop-minis-react/styles";
 
+/* Force white text inside product cards in dark mode when we add smr-dark-card */
+.smr-dark-card, .smr-dark-card * {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+/* Explicit black icon/text utility to override dark wrappers when needed */
+.smr-icon-black {
+  color: #000000 !important;
+  fill: #000000 !important;
+}
+
 /* Custom styles for stories */
 .scrollbar-hide {
   -ms-overflow-style: none;  /* Internet Explorer 10+ */

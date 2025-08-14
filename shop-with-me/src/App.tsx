@@ -386,7 +386,11 @@ export function App() {
       )
     } else {
       return (
-        <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-purple-100 text-gray-900'}`}>
+        <div className={`min-h-screen ${
+          isDarkMode
+            ? 'bg-gradient-to-b from-purple-900 via-black to-black text-white'
+            : 'bg-gradient-to-b from-purple-100 via-purple-200 to-purple-300 text-gray-900'
+        }`}>
           <div className="pt-12 px-4 pb-6">
             <UserFeed
               userId={feedView.userId}
@@ -443,8 +447,12 @@ export function App() {
 
   // Stories view
   if (view === 'stories') {
-    return (
-      <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-purple-100 text-gray-900'}`}>
+      return (
+        <div className={`min-h-screen ${
+          isDarkMode
+            ? 'bg-gradient-to-b from-purple-900 via-black to-black text-white'
+            : 'bg-gradient-to-b from-purple-100 via-purple-200 to-purple-300 text-gray-900'
+        }`}>
         <div className="pt-12 px-4 pb-6">
           <div className="flex items-center gap-3 mb-6">
             <Button onClick={handleBack} variant="secondary">← Back</Button>
@@ -464,8 +472,8 @@ export function App() {
   return (
     <div className={`min-h-screen relative overflow-hidden transition-colors duration-500 ${
       isDarkMode 
-        ? 'bg-black text-white' 
-        : 'bg-purple-100 text-gray-900'
+        ? 'bg-gradient-to-b from-purple-900 via-black to-black text-white' 
+        : 'bg-gradient-to-b from-purple-100 via-purple-200 to-purple-300 text-gray-900'
     }`}>
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden">
@@ -504,7 +512,7 @@ export function App() {
                 ? 'bg-gradient-to-r from-gray-100 via-white to-gray-200 bg-clip-text text-transparent' 
                 : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent'
             }`}>
-              Shop Together
+              StyleSync
             </h1>
           </div>
           <p className={`font-medium text-lg transition-colors duration-500 ${

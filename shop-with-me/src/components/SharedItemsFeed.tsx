@@ -421,7 +421,11 @@ export function SharedItemsFeed({onBack, onShareItem, currentUserId, isDarkMode,
   }
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-purple-100 text-gray-900'} pt-12 pb-6`}>
+    <div className={`min-h-screen ${
+      isDarkMode
+        ? 'bg-gradient-to-b from-purple-900 via-black to-black text-white'
+        : 'bg-gradient-to-b from-purple-100 via-purple-200 to-purple-300 text-gray-900'
+    } pt-12 pb-6`}>
       {/* Header */}
       <div className="px-6 mb-8">
         <div className="flex justify-between items-center mb-6">
@@ -438,7 +442,7 @@ export function SharedItemsFeed({onBack, onShareItem, currentUserId, isDarkMode,
               size="sm"
               className={`${isDarkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-700 text-white' : 'bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white hover:shadow-lg text-black'} transition-all duration-300`}
             >
-              <Share2 className={`w-4 h-4 mr-2 ${isDarkMode ? 'text-white' : 'text-black'}`} />
+              <Share2 className="w-4 h-4 mr-2 text-black" />
               Share Item
             </Button>
             <Button 
@@ -521,11 +525,7 @@ export function SharedItemsFeed({onBack, onShareItem, currentUserId, isDarkMode,
             <h3 className="text-xl font-bold mb-2">No shared items yet</h3>
             <p className="text-gray-600 mb-6">
               Share an item or follow people to see their shared items for community voting! 
-              {sharedItems.length === 0 && (
-                <span className="block mt-2 text-sm text-orange-600">
-                  💡 Make sure you've run the shared-items-schema.sql in your Supabase database
-                </span>
-              )}
+    
             </p>
             <Button 
               onClick={() => {
@@ -535,7 +535,7 @@ export function SharedItemsFeed({onBack, onShareItem, currentUserId, isDarkMode,
               }} 
               className="bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:shadow-lg transition-all duration-300"
             >
-              <Share2 className="w-4 h-4 mr-2" />
+              <Share2 className="w-4 h-4 mr-2 text-black" />
               Share Your First Item
             </Button>
           </div>
