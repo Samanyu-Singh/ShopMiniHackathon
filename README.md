@@ -17,11 +17,23 @@
 
 <div align="center">
 
-[![Shop With Me Demo](./shop-with-me/assets/videos/demo-thumbnail.jpg)](./shop-with-me/assets/videos/Video%20Clip%20(2025-08-11%2013_20_25).mp4)
+### 📱 Watch the Full Demo
 
-*Click the image above to watch the full demo video showcasing Shop With Me in action!*
+**🎬 Demo Video**: [`Video Clip (2025-08-11 13_20_25).mp4`](./shop-with-me/assets/videos/Video%20Clip%20(2025-08-11%2013_20_25).mp4)
 
-**Video File**: `./shop-with-me/assets/videos/Video Clip (2025-08-11 13_20_25).mp4`
+*Click the link above to download and watch the full demo video showcasing Shop With Me in action!*
+
+---
+
+### 🖼️ Demo Screenshots
+
+<div align="center">
+
+![Shop With Me Interface](./shop-with-me/assets/images/demo-screenshot-1.png)
+
+*Main interface showing friend feeds and product discovery*
+
+</div>
 
 </div>
 
