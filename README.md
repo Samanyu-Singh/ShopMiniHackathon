@@ -197,9 +197,9 @@ This project is part of the Shopify Shop Mini Hackathon and is subject to Shopif
 ## 👨‍💻 Team
 
 **Shop Mini Hackathon Team:**
-- **Revant Patel** - Lead Developer & UI/UX Designer
-- **Samanyu Singh** - Backend & Database Architecture
-- **Satvik Sandru** - Frontend Development & Integration
+- **Revant Patel** -  Developer 
+- **Samanyu Singh** - Developer
+- **Satvik Sandru** - Developer
 
 ---
 
