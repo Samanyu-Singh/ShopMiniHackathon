@@ -19,21 +19,15 @@
 
 ### 📱 Watch the Full Demo
 
-**🎬 Demo Video**: [`Video Clip (2025-08-11 13_20_25).mp4`](./shop-with-me/assets/videos/Video%20Clip%20(2025-08-11%2013_20_25).mp4)
-
-*Click the link above to download and watch the full demo video showcasing Shop With Me in action!*
-
----
-
-### 🖼️ Demo Screenshots
-
 <div align="center">
 
-![Shop With Me Interface](./shop-with-me/assets/images/demo-screenshot-1.png)
+[![Shop With Me Demo](https://img.youtube.com/vi/hnWM-A2e35U/0.jpg)](https://www.youtube.com/watch?v=hnWM-A2e35U)
 
-*Main interface showing friend feeds and product discovery*
+*Click the image above to watch the full demo video showcasing Shop With Me in action!*
 
 </div>
+
+
 
 </div>
 
