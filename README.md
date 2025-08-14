@@ -9,8 +9,6 @@
 
 **A revolutionary social shopping platform that lets you discover products through your friends' curated feeds**
 
-[Demo Video](#demo-video) • [Features](#features) • [Tech Stack](#tech-stack) • [Getting Started](#getting-started)
-
 </div>
 
 ---
@@ -19,9 +17,11 @@
 
 <div align="center">
 
-[![Shop With Me Demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
+[![Shop With Me Demo](./shop-with-me/assets/videos/demo-thumbnail.jpg)](./shop-with-me/assets/videos/Video%20Clip%20(2025-08-11%2013_20_25).mp4)
 
 *Click the image above to watch the full demo video showcasing Shop With Me in action!*
+
+**Video File**: `./shop-with-me/assets/videos/Video Clip (2025-08-11 13_20_25).mp4`
 
 </div>
 
