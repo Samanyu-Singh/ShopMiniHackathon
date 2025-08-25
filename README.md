@@ -23,7 +23,7 @@
 
 [![StyleSync Demo](https://img.youtube.com/vi/hnWM-A2e35U/0.jpg)](https://www.youtube.com/watch?v=hnWM-A2e35U)
 
-*Click the image above to watch the full demo video showcasing Shop With Me in action!*
+*Click the image above to watch the full demo video showcasing StyleSync in action!*
 
 </div>
 
