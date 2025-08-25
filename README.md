@@ -1,4 +1,4 @@
-# 🛍️ Shop With Me - Social Shopping Experience
+# 🛍️ StyleSync - Social Shopping Experience
 
 <div align="center">
 
@@ -21,7 +21,7 @@
 
 <div align="center">
 
-[![Shop With Me Demo](https://img.youtube.com/vi/hnWM-A2e35U/0.jpg)](https://www.youtube.com/watch?v=hnWM-A2e35U)
+[![StyleSync Demo](https://img.youtube.com/vi/hnWM-A2e35U/0.jpg)](https://www.youtube.com/watch?v=hnWM-A2e35U)
 
 *Click the image above to watch the full demo video showcasing Shop With Me in action!*
 
@@ -33,9 +33,9 @@
 
 ---
 
-## ✨ What is Shop With Me?
+## ✨ What is StyleSync?
 
-Shop With Me transforms the way you discover products by leveraging the power of social connections. Instead of browsing generic recommendations, explore curated product feeds from friends whose style and taste you trust.
+StyleSync transforms the way you discover products by leveraging the power of social connections. Instead of browsing generic recommendations, explore curated product feeds from friends whose style and taste you trust.
 
 ### 🎯 The Vision
 
